@@ -18,6 +18,7 @@ func main() {
 		Commands: []*cli.Command{
 			cmd.Create,
 			cmd.Add,
+			cmd.Ci,
 		},
 		Action: func(cCtx *cli.Context) error {
 			return cmd.Deployto(cCtx)
