@@ -55,10 +55,13 @@ func Get[T types.Application | types.Environment | types.Target](appDeploytoPath
 					var item any = new(T)
 					err := dec.Decode(item)
 					if err != nil {
-						if err.Error() == "EOF" || strings.HasPrefix(err.Error(), "yaml: line ") {
+						if err.Error() == "EOF" {
 							break
 						}
-						log.Debug().Str("file", path).Err(err).Msg("yaml decode error")
+						log.Error().Str("file", path).Err(err).Msg("yaml decode error")
+						if strings.HasPrefix(err.Error(), "yaml: line ") {
+							break
+						}
 						continue
 					}
 
@@ -68,7 +71,7 @@ func Get[T types.Application | types.Environment | types.Target](appDeploytoPath
 							result = append(result, item.(*T))
 						}
 					case *types.Environment:
-						if itemTyped.Kind == "Envirement" {
+						if itemTyped.Kind == "Environment" {
 							result = append(result, item.(*T))
 						}
 					case *types.Target:

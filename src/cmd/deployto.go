@@ -31,12 +31,12 @@ func Deployto(cCtx *cli.Context) error {
 		return errors.New("APP NOT FOUND")
 	}
 	app := apps[0]
-	log.Debug().Str("name", app.Meta.Meta.Name).Msg("Application found")
+	log.Debug().Str("name", app.Base.Meta.Name).Msg("Application found")
 	// Envirement
 	environments := yaml.Get[types.Environment](appPath)
 	var environment *types.Environment
 	for _, e := range environments {
-		if e.Meta.Meta.Name == environmentArg {
+		if e.Base.Meta.Name == environmentArg {
 			environment = e
 		}
 	}
@@ -44,15 +44,15 @@ func Deployto(cCtx *cli.Context) error {
 		log.Error().Int("len(environments)", len(environments)).Str("path", appPath).Str("waitEnvironment", environmentArg).Msg("environment ")
 		return errors.New("APP NOT FOUND")
 	}
-	log.Debug().Str("name", environment.Meta.Meta.Name).Msg("Environment found")
+	log.Debug().Str("name", environment.Base.Meta.Name).Msg("Environment found")
 	// Targets
 	var targets []*types.Target
 	for _, t := range yaml.Get[types.Target](appPath) {
-		if slices.Contains(environment.Spec.Targets, t.Meta.Meta.Name) {
+		if slices.Contains(environment.Spec.Targets, t.Base.Meta.Name) {
 			targets = append(targets, t)
 		}
 	}
-	if len(targets) == len(environment.Spec.Targets) {
+	if len(targets) != len(environment.Spec.Targets) {
 		log.Error().Int("len(targets)", len(targets)).Int("len(environment.Spec.Targets)", len(environment.Spec.Targets)).Msg("Target not found")
 		return errors.New("TARGET NOT FOUND")
 	}

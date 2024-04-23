@@ -8,7 +8,7 @@
             "mode": "auto",
             "program": "${workspaceFolder}",
             //"args": ["create"],
-            "cwd": "${workspaceFolder}/examples/two-services+two-postgress+s3/serviceA"
+            "cwd": "${workspaceFolder}/examples/test-yaml"
         }
     ]
 }
