@@ -1,0 +1,9 @@
+host: "serviceb-postgresql"
+port: 5432
+user: "serviceb"
+password: "HOrFk14CyX"
+dbname: "serviceb"
+endpoint: "serviceb-minio:9000"
+accessKeyID: "tdasdasdasdasdasd"
+secretAccessKey: "tdasdasdasdasdasd"
+bucketName: "test"

@@ -1,0 +1,24 @@
+apiVersion: v2
+name: servicea
+description: A Helm chart for Kubernetes
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
+keywords:
+  - business-logic-servicea
+  - metric
+dependencies:
+- name: ingress-nginx
+  alias: ingress-nginx-servicea
+  version: "4.10.0"
+  condition: ingress-nginx.enabled
+  repository: "https://kubernetes.github.io/ingress-nginx"
+- name: postgresql
+  condition: postgresql.enabled
+  alias: postgresql-servicea
+  version: "13.4.4"
+  repository: "https://charts.bitnami.com/bitnami"
+- name: serviceb
+  version: "0.1.0"
+  repository: "file://../../serviceb/helm"
+  

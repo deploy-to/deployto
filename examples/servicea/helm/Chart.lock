@@ -1,0 +1,12 @@
+dependencies:
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.10.0
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 13.4.4
+- name: serviceb
+  repository: file://../../serviceb/helm
+  version: 0.1.0
+digest: sha256:d65764bb37fc9a7d037744b3f199eb3de4328e991797f00b1aed6c615e2e9a54
+generated: "2024-04-23T17:22:44.616424+03:00"

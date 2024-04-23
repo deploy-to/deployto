@@ -1,0 +1,7 @@
+host: "servicea-postgresql"
+port: 5432
+user: "servicea"
+password: "HOrFk14CyX"
+dbname: "servicea"
+#endpoint to serviceb
+endpointb: "serviceb:8080"
