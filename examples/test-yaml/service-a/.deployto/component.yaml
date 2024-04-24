@@ -1,0 +1,14 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: serviceA
+spec:
+  dependencies:
+  - name: postgresql
+    alias: postgresql-for-a
+    repository: file://../service-b
+  - name: s3
+    alias: s3-for-a
+    repository: file://../service-b
+  script:
+    repository: file://../service-b

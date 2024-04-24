@@ -7,17 +7,17 @@
 //   - dev-target
 //   workflow:
 //     type: target-by-target
-//   helm:
+//   script:
 //     repository: file://./envirements-helm/dev
 
 package types
 
 type Environment struct {
-	Meta `json:",inline" yaml:",inline"`
+	Base `json:",inline" yaml:",inline"`
 	Spec *EnvironmentSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
 }
 
 type EnvironmentSpec struct {
 	Targets []string `json:"targets,omitempty" yaml:"targets,omitempty"`
-	Helm    *Helm    `json:"helm,omitempty" yaml:"helm,omitempty"`
+	Script  *Script  `json:"script,omitempty" yaml:"script,omitempty"`
 }

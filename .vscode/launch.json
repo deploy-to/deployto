@@ -7,8 +7,13 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
+<<<<<<< HEAD
             "args": ["job", "run"],
             "cwd": "${workspaceFolder}/examples/serviceA"
+=======
+            //"args": ["create"],
+            "cwd": "${workspaceFolder}/examples/test-yaml/service-a"
+>>>>>>> main
         }
     ]
 }
