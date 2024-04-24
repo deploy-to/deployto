@@ -1,4 +1,4 @@
-apiVersion: "deploy.to/v1/alpha"
+apiVersion: deployto.dev/v1beta1
 kind: Job
 metadata:
   name: 'Link Checker: All English'
@@ -6,8 +6,8 @@ spec:
   steps:
     - name: Hello World step
       run: |
-        echo "Hello World step 1"
-        echo "Hello World step 1"
+        echo "Hello World step 1.2"
+        make build
     - name: Hello World step 2
       run: |
-        echo "Hello World step 2"
+        make push
