@@ -13,7 +13,7 @@
 package types
 
 type Job struct {
-	Meta `json:",inline" yaml:",inline"`
+	Base `json:",inline" yaml:",inline"`
 	Spec *JobSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
 }
 

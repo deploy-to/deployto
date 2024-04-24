@@ -27,10 +27,9 @@ func callJob(cCtx *cli.Context) error {
 	}
 
 	// Application
-	appPath := yaml.GetAppPath(path)
-	apps := yaml.Get[types.Job](appPath)
+	apps := yaml.Get[types.Job](path)
 	if len(apps) != 1 {
-		log.Error().Int("len(app)", len(apps)).Str("path", appPath).Msg("wait one app")
+		log.Error().Int("len(app)", len(apps)).Str("path", path).Msg("wait one app")
 		return errors.New("APP NOT FOUND")
 	}
 
