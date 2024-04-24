@@ -7,8 +7,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            //"args": ["create"],
-            "cwd": "${workspaceFolder}/examples/two-services+two-postgress+s3/serviceA"
+            "args": ["job", "run"],
+            "cwd": "${workspaceFolder}/examples/serviceA"
         }
     ]
 }

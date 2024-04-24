@@ -38,7 +38,7 @@ func GetAppPath(workPath string) string {
 	}
 }
 
-func Get[T types.Application | types.Environment | types.Target](appDeploytoPath string) (result []*T) {
+func Get[T types.Application | types.Environment | types.Target | types.Job](appDeploytoPath string) (result []*T) {
 	err := filepath.Walk(appDeploytoPath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -73,6 +73,10 @@ func Get[T types.Application | types.Environment | types.Target](appDeploytoPath
 						}
 					case *types.Target:
 						if itemTyped.Kind == "Target" {
+							result = append(result, item.(*T))
+						}
+					case *types.Job:
+						if itemTyped.Kind == "Job" {
 							result = append(result, item.(*T))
 						}
 					default:

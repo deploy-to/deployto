@@ -1,0 +1,13 @@
+apiVersion: "deploy.to/v1/alpha"
+kind: Job
+metadata:
+  name: 'Link Checker: All English'
+spec:
+  steps:
+    - name: Hello World step
+      run: |
+        echo "Hello World step 1"
+        echo "Hello World step 1"
+    - name: Hello World step 2
+      run: |
+        echo "Hello World step 2"
