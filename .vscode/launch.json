@@ -7,13 +7,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-<<<<<<< HEAD
-            "args": ["job", "run"],
-            "cwd": "${workspaceFolder}/examples/serviceA"
-=======
-            //"args": ["create"],
-            "cwd": "${workspaceFolder}/examples/test-yaml/service-a"
->>>>>>> main
+            "args": ["job","run"],
+            "cwd": "${workspaceFolder}/examples/two-services+two-postgresql+s3/service-a"
         }
     ]
 }
