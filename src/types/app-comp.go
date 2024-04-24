@@ -20,7 +20,11 @@
 
 package types
 
-type Component = Application
+type Component struct {
+	Base `json:",inline" yaml:",inline"`
+	Spec *ApplicationSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
+}
+
 type Application struct {
 	Base `json:",inline" yaml:",inline"`
 	Spec *ApplicationSpec `json:"spec,omitempty" yaml:"spec,omitempty"`

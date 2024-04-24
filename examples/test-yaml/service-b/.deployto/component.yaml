@@ -1,0 +1,8 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: serviceB
+spec:
+  dependencies:
+  - name: postgresql
+  - name: minio

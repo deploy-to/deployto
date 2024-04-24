@@ -27,15 +27,15 @@ make push
 helm upgrade --install servicea ./ -f values.yaml 
 
 Итого получаем :
-
+( в будущем будем использовать https://asciiflow.com/#/ )
                     NGINX
                     |
                     |
                     ↓
  serviceb <---- servicea
-  |    |            |
-  |    |            |
-  db   s3           db
+  |      \     /    |
+  |       \   /     |
+  s3       db-b    db-a
 
 
 проверить запрос к servicea через nginx:

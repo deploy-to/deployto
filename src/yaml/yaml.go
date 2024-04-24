@@ -2,6 +2,7 @@ package yaml
 
 import (
 	"deployto/src/types"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,34 +12,53 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const DeploytoPath = ".deployto"
+const DeploytoPath = ".deployto" //TODO bug this const defined more then in one place
 
-// Ищу корневую папку приложения. Именно в ней, в .deployto хранятся настройки приложения, окружений, таргетов
-func GetAppPath(workPath string) string {
+func GetDeploytoPath(path string) string {
+	return filepath.Join(path, DeploytoPath)
+}
+
+func DeploytoPathExists(path string) bool {
+	deploytoPath := GetDeploytoPath(path)
+	_, err := os.Stat(deploytoPath)
+	if err == nil {
+		return true
+	}
+	if !os.IsNotExist(err) {
+		log.Info().Err(err).Str("path", deploytoPath).Msg("app path search error")
+	}
+	return false
+}
+
+// Ищу объекты приложения и компоненты.
+// В папке приложения, в подпапке .deployto, хранятся настройки приложения, окружений, таргетов. При поиске оринтируюсь на нахождение kind:Application
+// В папке компоненты, в подпапке .deployto, хранятся настройки компоненты. Если не найдена, то приравнивается равной папке приложения
+func GetAppComps(path string) (app *types.Application, comps []*types.Component, err error) {
+	currentPath := path
 	for {
-		if workPath == "/" || len(workPath) < 4 /*TODO need test on windows*/ {
-			log.Debug().Str("path", workPath).Msg("getDeployToPaths end - too short path")
-			return ""
+		if currentPath == "/" || len(currentPath) < 4 /*TODO need test on windows*/ {
+			log.Error().Str("startPath", path).Str("currentPath", currentPath).Msg("getDeployToPaths end - too short path")
+			return app, comps, errors.New("APPLICATION PATH NOT FOUND")
 		}
 
-		log.Debug().Str("path", workPath).Msg("check dir")
-		tryDeploytoPath := filepath.Join(workPath, DeploytoPath)
-		_, err := os.Stat(tryDeploytoPath)
-		if err == nil {
-			log.Debug().Str("path", tryDeploytoPath).Msg("deployto path found")
-			if len(Get[types.Application](tryDeploytoPath)) > 0 {
-				return workPath
+		log.Debug().Str("path", currentPath).Msg("check dir")
+
+		apps := Get[types.Application](GetDeploytoPath(currentPath))
+		if len(apps) > 0 {
+			if len(apps) > 1 {
+				log.Error().Str("startPath", path).Str("currentPath", currentPath).Msg("More than one application")
 			}
-		} else {
-			if !os.IsNotExist(err) {
-				return ""
-			}
+			log.Debug().Str("name", apps[0].Base.Meta.Name).Msg("Application found")
+			return apps[0], comps, nil
 		}
-		workPath = filepath.Dir(workPath)
+		if len(comps) == 0 {
+			comps = Get[types.Component](GetDeploytoPath(currentPath))
+		}
+		currentPath = filepath.Dir(currentPath)
 	}
 }
 
-func Get[T types.Application | types.Environment | types.Target](appDeploytoPath string) (result []*T) {
+func Get[T types.Application | types.Component | types.Environment | types.Target](appDeploytoPath string) (result []*T) {
 	err := filepath.Walk(appDeploytoPath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -67,14 +87,22 @@ func Get[T types.Application | types.Environment | types.Target](appDeploytoPath
 
 					switch itemTyped := item.(type) {
 					case *types.Application:
+						itemTyped.Base.Status.FileName = path
 						if itemTyped.Kind == "Application" {
 							result = append(result, item.(*T))
 						}
+					case *types.Component:
+						itemTyped.Base.Status.FileName = path
+						if itemTyped.Kind == "Component" {
+							result = append(result, item.(*T))
+						}
 					case *types.Environment:
+						itemTyped.Base.Status.FileName = path
 						if itemTyped.Kind == "Environment" {
 							result = append(result, item.(*T))
 						}
 					case *types.Target:
+						itemTyped.Base.Status.FileName = path
 						if itemTyped.Kind == "Target" {
 							result = append(result, item.(*T))
 						}

@@ -1,9 +1,14 @@
 apiVersion: deployto.dev/v1beta1
-kind: Сomponent
+kind: Component
 metadata:
-  name: ExampleApp
+  name: serviceA
 spec:
-  components:
-  - repository: file://../serviceB
+  dependencies:
   - name: postgresql
-  - name: minio
+    alias: postgresql-for-a
+    repository: file://../service-b
+  - name: s3
+    alias: s3-for-a
+    repository: file://../service-b
+  script:
+    repository: file://../service-b
