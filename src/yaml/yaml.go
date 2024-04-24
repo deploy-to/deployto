@@ -58,7 +58,7 @@ func GetAppComps(path string) (app *types.Application, comps []*types.Component,
 	}
 }
 
-func Get[T types.Application | types.Component | types.Environment | types.Target](appDeploytoPath string) (result []*T) {
+func Get[T types.Application | types.Component | types.Environment | types.Target | types.Job](appDeploytoPath string) (result []*T) {
 	err := filepath.Walk(appDeploytoPath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
