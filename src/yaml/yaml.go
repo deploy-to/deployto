@@ -58,7 +58,7 @@ func GetAppComps(path string) (app *types.Application, comps []*types.Component,
 	}
 }
 
-func Get[T types.Application | types.Component | types.Environment | types.Target](appDeploytoPath string) (result []*T) {
+func Get[T types.Application | types.Component | types.Environment | types.Target | types.Job](appDeploytoPath string) (result []*T) {
 	err := filepath.Walk(appDeploytoPath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -104,6 +104,10 @@ func Get[T types.Application | types.Component | types.Environment | types.Targe
 					case *types.Target:
 						itemTyped.Base.Status.FileName = path
 						if itemTyped.Kind == "Target" {
+							result = append(result, item.(*T))
+						}
+					case *types.Job:
+						if itemTyped.Kind == "Job" {
 							result = append(result, item.(*T))
 						}
 					default:
