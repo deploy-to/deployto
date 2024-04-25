@@ -1,0 +1,15 @@
+apiVersion: deployto.dev/v1beta1
+kind: Environment
+metadata:
+  name: local
+spec:
+  targets:
+    - local-target
+---
+apiVersion: deployto.dev/v1beta1
+kind: Target
+metadata:
+  name: local-target
+spec:
+  script:
+    type: Helm

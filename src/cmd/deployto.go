@@ -13,6 +13,7 @@ import (
 )
 
 func Deployto(cCtx *cli.Context) error {
+
 	environmentArg := cCtx.Args().First()
 	if len(environmentArg) == 0 {
 		environmentArg = "local"
