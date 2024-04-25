@@ -89,15 +89,18 @@ func Deployto(cCtx *cli.Context) error {
 func Deploy(base *types.Base, as *types.ApplicationSpec) {
 	l := log.With().Str("name", base.Meta.Name).Logger()
 
-	l.Debug().Msg("Preparing the values")
+	l.Debug().Msg("TODO CI")
+	l.Debug().Msg("TODO Push ")
+
+	l.Debug().Msg("TODO Preparing the values")
 	//Run dependency
 	for _, d := range as.Dependencies {
-		l.Debug().Str("DependencyName", d.Name).Str("DependencyAlias", d.Alias).Msg("Run dependency")
+		l.Debug().Str("DependencyName", d.Name).Str("DependencyAlias", d.Alias).Msg("TODO Run dependency")
 	}
 	// Run script
 	if as.Script == nil {
 		l.Debug().Msg("Script is not defined")
 	} else {
-		l.Debug().Msg("Run script")
+		l.Debug().Msg("TODO Run script")
 	}
 }
