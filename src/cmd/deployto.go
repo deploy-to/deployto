@@ -85,6 +85,7 @@ func Deployto(cCtx *cli.Context) error {
 }
 
 func Deploy(base *types.Base, as *types.ApplicationSpec) {
+	выполнять для приложения
 	log.Debug().Str("name", base.Meta.Name).Msg("!!! подгатавливаю values")
 	for _, d := range as.Dependencies {
 		log.Debug().Str("name", d.Name).Str("alias", d.Alias).Msg("!!! выполняю зависимость")
