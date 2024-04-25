@@ -9,6 +9,10 @@ spec:
     version: "1.2.3"
   - name: postgresql
     alias: postgresql-for-a
+    input:   
+      install_to: shared
+      replicatuion: 
+        true
   - name: s3
     alias: s3-for-a
   script:
@@ -16,7 +20,7 @@ spec:
     type: helm
     input:
        db_name:  $postgresql-for-a.dbname
-       log_level:  debug
+       log_level:    
 //	  output:
 
      

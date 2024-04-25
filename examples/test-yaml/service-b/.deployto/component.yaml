@@ -6,3 +6,5 @@ spec:
   dependencies:
   - name: postgresql
   - name: minio
+
+//

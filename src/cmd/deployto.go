@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"deployto/src/deploy"
 	"deployto/src/types"
 	"deployto/src/yaml"
 	"errors"
@@ -89,18 +90,35 @@ func Deployto(cCtx *cli.Context) error {
 func Deploy(base *types.Base, as *types.ApplicationSpec) {
 	l := log.With().Str("name", base.Meta.Name).Logger()
 
-	l.Debug().Msg("TODO CI")
-	l.Debug().Msg("TODO Push ")
-
+	var values map[string] interface{}
+	//TODO values из
+	l.Debug().Msg("TODO  BUILD && Push ") // output где взять образ
+	//TODO положить репозиторий/образ/тег в values
+	
+	//TODO положить в values всё из as.Script.Input
 	l.Debug().Msg("TODO Preparing the values")
+
+	//TODO values из
+
 	//Run dependency
 	for _, d := range as.Dependencies {
 		l.Debug().Str("DependencyName", d.Name).Str("DependencyAlias", d.Alias).Msg("TODO Run dependency")
+				
+		//TODO скачать git
+		gitPath := ""
+		// TODDO из глобальной мапы взять HelmRunScript по as.Script.Type
+		o, e := deploy.HelmRunScript(gitPath, values)
+
+		values[d.Alias] = o
 	}
 	// Run script
 	if as.Script == nil {
 		l.Debug().Msg("Script is not defined")
 	} else {
+		// TODDO из глобальной мапы взять HelmRunScript по as.Script.Type
 		l.Debug().Msg("TODO Run script")
+		//TODO скачать git
+		gitPath := ""
+		o, e := deploy.HelmRunScript(gitPath, values)
 	}
 }

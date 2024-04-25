@@ -34,9 +34,3 @@ type ApplicationSpec struct {
 	Dependencies []*Dependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 	Script       *Script       `json:"script,omitempty" yaml:"script,omitempty"`
 }
-
-type Dependency struct {
-	Name   string  `json:"name,omitempty" yaml:"name,omitempty"`
-	Alias  string  `json:"alias,omitempty" yaml:"alias,omitempty"`
-	Script *Script `json:",inline" yaml:",inline"`
-}
