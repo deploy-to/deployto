@@ -13,7 +13,6 @@ import (
 )
 
 func Deployto(cCtx *cli.Context) error {
-
 	environmentArg := cCtx.Args().First()
 	if len(environmentArg) == 0 {
 		environmentArg = "local"
@@ -80,15 +79,25 @@ func Deployto(cCtx *cli.Context) error {
 		for _, c := range comps {
 			Deploy(&c.Base, c.Spec)
 		}
+	} else {
+		Deploy(&app.Base, app.Spec)
 	}
 
 	return nil
 }
 
 func Deploy(base *types.Base, as *types.ApplicationSpec) {
-	log.Debug().Str("name", base.Meta.Name).Msg("!!! подгатавливаю values")
+	l := log.With().Str("name", base.Meta.Name).Logger()
+
+	l.Debug().Msg("Preparing the values")
+	//Run dependency
 	for _, d := range as.Dependencies {
-		log.Debug().Str("name", d.Name).Str("alias", d.Alias).Msg("!!! выполняю зависимость")
+		l.Debug().Str("DependencyName", d.Name).Str("DependencyAlias", d.Alias).Msg("Run dependency")
 	}
-	log.Debug().Str("name", base.Meta.Name).Str("Script.Repository", as.Script.Repository).Msg("!!! выполняю скрипт")
+	// Run script
+	if as.Script == nil {
+		l.Debug().Msg("Script is not defined")
+	} else {
+		l.Debug().Msg("Run script")
+	}
 }
