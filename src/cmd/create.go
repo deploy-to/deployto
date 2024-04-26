@@ -53,7 +53,11 @@ var Create = &cli.Command{
 			if YN != "Y" || err != nil {
 				return nil
 			}
-			addComponent("")
+			err = addComponent("")
+			if err != nil {
+				log.Error().Err(err).Msg("Add component error")
+				return err
+			}
 		}
 	},
 }

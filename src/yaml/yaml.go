@@ -30,36 +30,33 @@ func DeploytoPathExists(path string) bool {
 	return false
 }
 
-// Ищу объекты приложения и компоненты.
-// В папке приложения, в подпапке .deployto, хранятся настройки приложения, окружений, таргетов. При поиске оринтируюсь на нахождение kind:Application
-// В папке компоненты, в подпапке .deployto, хранятся настройки компоненты. Если не найдена, то приравнивается равной папке приложения
-func GetAppComps(path string) (app *types.Application, comps []*types.Component, err error) {
+// Ищу компоненты.
+// Начиная с указанной, проверяю все родительские папки на наличие в ней папки .deployto, когда найдена, то это и есть папка компоненты
+// Возвращаю все kind: Component из папки компоненты
+func GetComponent(path string) (comps []*types.Component, err error) {
 	currentPath := path
 	for {
 		if currentPath == "/" || len(currentPath) < 4 /*TODO need test on windows*/ {
 			log.Error().Str("startPath", path).Str("currentPath", currentPath).Msg("getDeployToPaths end - too short path")
-			return app, comps, errors.New("APPLICATION PATH NOT FOUND")
+			return nil, errors.New("COMPONENT FOLDER NOT FOUND")
 		}
 
 		log.Debug().Str("path", currentPath).Msg("check dir")
 
-		apps := Get[types.Application](GetDeploytoPath(currentPath))
-		if len(apps) > 0 {
-			if len(apps) > 1 {
-				log.Error().Str("startPath", path).Str("currentPath", currentPath).Msg("More than one application")
-			}
-			log.Debug().Str("name", apps[0].Base.Meta.Name).Msg("Application found")
-			return apps[0], comps, nil
-		}
-		if len(comps) == 0 {
+		if DeploytoPathExists(currentPath) {
 			comps = Get[types.Component](GetDeploytoPath(currentPath))
+			if len(comps) == 0 {
+				log.Error().Str("startPath", path).Str("currentPath", currentPath).Msg("getDeployToPaths end - too short path")
+				return nil, errors.New("COMPONENT NOT FOUND IN COMPONENT FOLDER")
+			}
+			return comps, nil
 		}
 		currentPath = filepath.Dir(currentPath)
 	}
 }
 
-func Get[T types.Application | types.Component | types.Environment | types.Target | types.Job](appDeploytoPath string) (result []*T) {
-	err := filepath.Walk(appDeploytoPath,
+func Get[T types.Component | types.Environment | types.Target | types.Job](deploytoPath string) (result []*T) {
+	err := filepath.Walk(deploytoPath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -86,11 +83,6 @@ func Get[T types.Application | types.Component | types.Environment | types.Targe
 					}
 
 					switch itemTyped := item.(type) {
-					case *types.Application:
-						itemTyped.Base.Status.FileName = path
-						if itemTyped.Kind == "Application" {
-							result = append(result, item.(*T))
-						}
 					case *types.Component:
 						itemTyped.Base.Status.FileName = path
 						if itemTyped.Kind == "Component" {

@@ -1,18 +1,17 @@
 package types
 
-// Примеры описания Dependency
-// 1)
-// Name: postgresql
-// Создастся база postgresql
-// Output:
-// host, port,
-
 type Dependency struct {
+	Kind   string  `json:"kind,omitempty" yaml:"kind,omitempty"`
 	Name   string  `json:"name,omitempty" yaml:"name,omitempty"`
-	Alias  string  `json:"alias,omitempty" yaml:"alias,omitempty"`
+	Root   bool    `json:"root,omitempty" yaml:"root,omitempty"`
 	Script *Script `json:",inline" yaml:",inline"`
 }
 
+// TODO подумать, как будет выглядить Script для:
+// * Type == helm
+// * Type == terraform
+// * Type == component
+// * Type == do-not-deploy
 type Script struct {
 	Type       string  `json:"type,omitempty" yaml:"type,omitempty"`
 	Version    string  `json:"version,omitempty" yaml:"version,omitempty"`

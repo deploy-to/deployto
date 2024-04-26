@@ -22,15 +22,10 @@ package types
 
 type Component struct {
 	Base `json:",inline" yaml:",inline"`
-	Spec *ApplicationSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
+	Spec *ComponentSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
 }
 
-type Application struct {
-	Base `json:",inline" yaml:",inline"`
-	Spec *ApplicationSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
-}
-
-type ApplicationSpec struct {
+type ComponentSpec struct {
 	Dependencies []*Dependency `json:"dependencies,omitempty" yaml:"dependencies,omitempty"`
 	Script       *Script       `json:"script,omitempty" yaml:"script,omitempty"`
 }

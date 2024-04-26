@@ -4,7 +4,9 @@ metadata:
   name: serviceB
 spec:
   dependencies:
-  - name: postgresql
-  - name: minio
-
-//
+  - kind: postgresql
+    name: only4b
+  - kind: postgresql
+    name: shared-db-between-services
+    root: true
+  - kind: s3

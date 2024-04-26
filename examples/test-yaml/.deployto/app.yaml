@@ -1,9 +1,14 @@
 apiVersion: deployto.dev/v1beta1
-kind: Application
+kind: Component
 metadata:
-  name: ExampleApp
+  name: FullApplication
 spec:
   dependencies:
-  - name: serviceA
-    repository: file://./serviceA
-  
+  - kind: component
+    name: service-a
+    root: true
+    repository: file://../service-a
+# service b is loaded depending on service a 
+
+
+
