@@ -33,7 +33,9 @@ type ReadFromResult struct {
 }
 
 func (cww *ContextWrappedWriter) Write(p []byte) (n int, err error) {
-	return cww.Write(p)
+	log.Error().Msg("not used")
+	var c int
+	return c, errors.New("NOT IMPLIMENTED")
 }
 
 func (cww *ContextWrappedWriter) ReadFrom(r io.Reader) (n int64, err error) {
@@ -123,7 +125,12 @@ var Job = &cli.Command{
 			Usage: "run a job",
 			Action: func(cCtx *cli.Context) error {
 				fmt.Println("new Job Run: ", cCtx.Args().First())
-				callJob(cCtx)
+				err := callJob(cCtx)
+
+				if err != nil {
+					log.Err(err).Msg("huh.NewInput()...Run() error")
+					return err
+				}
 				return nil
 			},
 			Flags: []cli.Flag{
