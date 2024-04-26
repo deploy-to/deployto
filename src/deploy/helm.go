@@ -77,17 +77,6 @@ func HelmRunScript(kubeconfig string, names []string, kind string, script *types
 	if err != nil {
 		panic(err)
 	}
-	var ppoutput map[string]interface{}
-	err = yaml.Unmarshal(template, &ppoutput)
-	if err != nil {
-		panic(err)
-	}
-
-	status := map[string]any{
-		"rsc": 3711,
-		"r":   2138,
-		"gri": 1908,
-		"adg": 912,
-	}
+	is := yaml.GetBytes(template)
 	return nil, nil
 }

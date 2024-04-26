@@ -102,6 +102,14 @@ func Get[T types.Component | types.Environment | types.Target | types.Job](deplo
 						if itemTyped.Kind == "Job" {
 							result = append(result, item.(*T))
 						}
+					case *types.Service:
+						if itemTyped.Kind == "Service" {
+							result = append(result, item.(*T))
+						}
+					case *types.Ingress:
+						if itemTyped.Kind == "Ingress" {
+							result = append(result, item.(*T))
+						}
 					default:
 						log.Error().Type("type", item).Msg("yaml crd type not supported")
 					}
@@ -115,32 +123,26 @@ func Get[T types.Component | types.Environment | types.Target | types.Job](deplo
 	return
 }
 
-func Get(yamlstring string) (result []*T) {
-	var yaml map[string]interface{}
-	err := yaml.Unmarshal(yamlstring, &yaml)
+func GetBytes[T types.Service | types.Ingress](yamlb []byte) (result []*T) {
+	var yl map[string]interface{}
+	err := yaml.Unmarshal(yamlb, &yl)
 	if err != nil {
 		panic(err)
 	}
 	for {
 		var item any = new(T)
-		err := dec.Decode(item)
-		if err != nil {
-			if err.Error() == "EOF" {
-				break
+		switch itemTyped := item.(type) {
+		case *types.Ingress:
+			if itemTyped.Kind == "Ingress" {
+				result = append(result, item.(*T))
 			}
-			log.Error().Str("file", path).Err(err).Msg("yaml decode error")
-			if strings.HasPrefix(err.Error(), "yaml: line ") {
-				break
+		case *types.Service:
+			if itemTyped.Kind == "Service" {
+				result = append(result, item.(*T))
 			}
-			continue
-		}
-		itemTyped := item.(type)
-		if itemTyped.Kind == "Ingress" {
-			result = append(result, item.(*T))
-		}
-		if itemTyped.Kind == "Service" {
-			result = append(result, item.(*T))
+		default:
+			log.Error().Type("type", item).Msg("yaml crd type not supported")
 		}
 	}
-	return result
+	return
 }
