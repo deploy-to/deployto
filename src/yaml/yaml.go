@@ -114,3 +114,33 @@ func Get[T types.Component | types.Environment | types.Target | types.Job](deplo
 	}
 	return
 }
+
+func Get(yamlstring string) (result []*T) {
+	var yaml map[string]interface{}
+	err := yaml.Unmarshal(yamlstring, &yaml)
+	if err != nil {
+		panic(err)
+	}
+	for {
+		var item any = new(T)
+		err := dec.Decode(item)
+		if err != nil {
+			if err.Error() == "EOF" {
+				break
+			}
+			log.Error().Str("file", path).Err(err).Msg("yaml decode error")
+			if strings.HasPrefix(err.Error(), "yaml: line ") {
+				break
+			}
+			continue
+		}
+		itemTyped := item.(type)
+		if itemTyped.Kind == "Ingress" {
+			result = append(result, item.(*T))
+		}
+		if itemTyped.Kind == "Service" {
+			result = append(result, item.(*T))
+		}
+	}
+	return result
+}
