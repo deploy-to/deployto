@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"deployto/src/deploy"
+	"deployto/src/gitclient"
 	"deployto/src/types"
 	"deployto/src/yaml"
 	"errors"
@@ -29,7 +30,7 @@ func Deployto(cCtx *cli.Context) error {
 	// COMPONENTS
 	comps, err := yaml.GetComponent(path)
 	if err != nil {
-		log.Error().Err(err).Str("path", path).Msg("Application/Components search error")
+		log.Error().Err(err).Str("path", path).Msg("Components search error")
 		return err
 	}
 	// Envirement
@@ -41,8 +42,8 @@ func Deployto(cCtx *cli.Context) error {
 		}
 	}
 	if environment == nil {
-		log.Error().Int("len(environments)", len(environments)).Str("path", comps[0].StatusGetPath()).Str("waitEnvironment", environmentArg).Msg("environment ")
-		return errors.New("APP NOT FOUND")
+		log.Error().Int("len(environments)", len(environments)).Str("path", comps[0].StatusGetPath()).Str("waitEnvironment", environmentArg).Msg("environment not found")
+		return errors.New("ENVIRONMENT NOT FOUND")
 	}
 	log.Debug().Str("name", environment.Base.Meta.Name).Msg("Environment found")
 	// Targets
@@ -75,11 +76,7 @@ func Deployto(cCtx *cli.Context) error {
 
 	for _, c := range comps {
 		//деплою все найденные компоненты
-		values := make(map[string]any)
-		values["git"] = GetGitValues(c.StatusGetPath())
-		//values["image"] := CI()
-
-		e := Deploy("TODO, for each target", []string{c.Base.Meta.Name}, c.Spec, values)
+		e := Deploy("TODO, for each target", []string{c.Base.Meta.Name}, c.StatusGetPath(), c.Spec, make(map[string]any))
 		if e != nil {
 			log.Error().Err(e).Msg("Component deploy error")
 			err = errors.Join(err, e)
@@ -88,21 +85,27 @@ func Deployto(cCtx *cli.Context) error {
 	return err
 }
 
-func GetGitValues(path string) map[string]any {
-	//TODO
-	return nil
+// TODO заглушка, для вызова job
+// output где взять образ
+func DoJob(s string) (map[string]any, error) {
+	return nil, nil
 }
 
-func Deploy(kubeconfig string, aliases []string, as *types.ComponentSpec, values map[string]interface{}) (resultError error) {
+func Deploy(kubeconfig string, aliases []string, workDir string, as *types.ComponentSpec, values map[string]any) (resultError error) {
 	l := log.With().Strs("aliases", aliases).Logger()
-	//TODO values из
-	l.Debug().Msg("TODO  BUILD && Push") // output где взять образ
+	if as == nil {
+		l.Debug().Msg("ComponentSpec is nil")
+		return nil
+	}
+
+	l.Debug().Msg("Get commit hash and tags")
+	values["git"] = gitclient.GetValues(workDir)
+	l.Debug().Msg("TODO  BUILD && Push")
+	values["image"], resultError = DoJob(as.BuildJob)
 	//TODO положить репозиторий/образ/тег в values
 
 	//TODO положить в values всё из as.Script.Input
 	l.Debug().Msg("TODO Preparing the values")
-
-	//TODO values из
 
 	//Run dependency
 	for _, d := range as.Dependencies {
@@ -121,7 +124,8 @@ func Deploy(kubeconfig string, aliases []string, as *types.ComponentSpec, values
 			continue
 		}
 
-		l.Debug().Strs("alias", dependencyAliases).Msg("TODO Run dependency")
+		// for dependencies, if the script is not defined, I will try to get the default script by kind
+		l.Debug().Strs("alias", dependencyAliases).Msg("Run dependency")
 		o, e := RunScript(kubeconfig, dependencyAliases, d.Kind, d.Script, values)
 		if e != nil {
 			l.Error().Err(e).Msg("RunScript error")
@@ -129,14 +133,15 @@ func Deploy(kubeconfig string, aliases []string, as *types.ComponentSpec, values
 		}
 		values[buildAlias(dependencyAliases)] = o
 	}
-	// Run script
-	o, e := RunScript(kubeconfig, aliases, "component", as.Script, values)
-	if e != nil {
-		l.Error().Err(e).Msg("RunScript error")
-		resultError = errors.Join(resultError, e)
+	// run the script on the component only if it is defined
+	if as.Script != nil {
+		o, e := RunScript(kubeconfig, aliases, "component", as.Script, values)
+		if e != nil {
+			l.Error().Err(e).Msg("RunScript error")
+			resultError = errors.Join(resultError, e)
+		}
+		values[buildAlias(aliases)] = o
 	}
-	values[buildAlias(aliases)] = o
-
 	return resultError
 }
 
@@ -146,18 +151,16 @@ func buildAlias(names []string) string {
 
 func RunScript(kubeconfig string, names []string, kind string, script *types.Script, input map[string]any) (output map[string]any, err error) {
 	l := log.With().Strs("names", names).Logger()
-	if script == nil {
-		l.Debug().Msg("Script not defined")
-		return nil, nil
-	}
-	l.Debug().Str("scriptType", script.Type).Msg("Run script")
-	if runScript, ok := deploy.RunScripts[script.Type]; ok {
-		return runScript(kubeconfig, names, kind, script, input)
+	if script != nil {
+		if runScript, ok := deploy.RunScripts[script.Type]; ok {
+			l.Debug().Str("scriptType", script.Type).Msg("Run script")
+			return runScript(kubeconfig, names, kind, script, input)
+		}
 	}
 	if runScript, ok := deploy.RunScripts["component"]; ok {
+		l.Debug().Msg("script.Type not defined, run script for component")
 		return runScript(kubeconfig, names, kind, script, input)
 	}
-
 	l.Error().Msg("RunScripts function not found")
 	return nil, errors.New("RUNSCRIPT FUNCTION NOT FOUND")
 }
