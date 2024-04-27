@@ -3,6 +3,7 @@ package yaml
 import (
 	"deployto/src/types"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -143,6 +144,23 @@ func GetBytes[T types.Service | types.Ingress](yamlb []byte) (result []*T) {
 		default:
 			log.Error().Type("type", item).Msg("yaml crd type not supported")
 		}
+	}
+	return
+}
+
+func GetBytes2(yamlb []byte) (services []types.Service, ingresses []types.Ingress) {
+
+	// Convert Kubernetes objects to YAML
+	err := yaml.Unmarshal(yamlb, &services)
+	if err != nil {
+		fmt.Println("Error converting services to YAML:", err)
+		return
+	}
+
+	err = yaml.Unmarshal(yamlb, &ingresses)
+	if err != nil {
+		fmt.Println("Error converting ingresses to YAML:", err)
+		return
 	}
 	return
 }

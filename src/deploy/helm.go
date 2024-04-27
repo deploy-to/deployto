@@ -3,10 +3,14 @@ package deploy
 import (
 	"bytes"
 	"deployto/src/types"
+	localyaml "deployto/src/yaml"
 	"net/url"
 	"strings"
-	"github.com/poncheg/go-helm-client"
-	"gopkg.in/yaml.v3"
+
+	helmclient "github.com/poncheg/go-helm-client"
+	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v2"
+	"helm.sh/helm/v3/pkg/repo"
 )
 
 func init() {
@@ -17,8 +21,10 @@ func HelmRunScript(kubeconfig string, names []string, kind string, script *types
 	// эта функци будет вызыватсья только для script.type = helm
 	// для script.type == helm, атрибут kind можно игнорировать
 	var outputBuffer bytes.Buffer
-
-	opt := &Options{
+	// log.Error().Err(err).Str("path", path).Msg("Application/Components search error")
+	// log.Debug().Str("environment", environmentArg).Msg("start deployto")
+	//set settings for helm
+	opt := &helmclient.Options{
 		Namespace:        target.Namespace, // Change this to the namespace you wish the client to operate in.
 		RepositoryCache:  "/tmp/.helmcache",
 		RepositoryConfig: "/tmp/.helmrepo",
@@ -27,16 +33,20 @@ func HelmRunScript(kubeconfig string, names []string, kind string, script *types
 		DebugLog:         func(format string, v ...interface{}) {},
 		Output:           &outputBuffer, // Not mandatory, leave open for default os.Stdout
 	}
-
+	// init helm client
 	helmClient, err := helmclient.New(opt)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("Create helm client error")
+		return nil, err
 	}
+	// get repository url
 	u, err := url.Parse(script.Repository)
 	if err != nil {
-		log.Debug(err)
+		log.Error().Err(err).Msg("Url parsing  error")
+		return nil, err
 	}
-	ua := strings.Split(u, "/")
+	// get name for repository from url path
+	ua := strings.Split(u.Path, "/")
 	chartRepo := repo.Entry{
 		Name: ua[0],
 		URL:  script.Repository,
@@ -50,10 +60,10 @@ func HelmRunScript(kubeconfig string, names []string, kind string, script *types
 	if err != nil {
 		panic(err)
 	}
-
-	chartSpec := ChartSpec{
+	// put settings for chart and put values
+	chartSpec := helmclient.ChartSpec{
 		ReleaseName: kind,
-		ChartName:   chartRepo + kind,
+		ChartName:   chartRepo.Name + kind,
 		//нужна версия чарта которую деплоим
 		//Version: "",
 		ValuesYaml:  string(valuesFile),
@@ -64,12 +74,12 @@ func HelmRunScript(kubeconfig string, names []string, kind string, script *types
 
 	// Install a chart release.
 	// Note that helmclient.Options.Namespace should ideally match the namespace in chartSpec.Namespace.
-	release, err := helmClient.InstallOrUpgradeChart(&chartSpec, nil); err != nil {
+	_, err = helmClient.InstallOrUpgradeChart(nil, &chartSpec, nil)
 	if err != nil {
 		panic(err)
 	}
 
-	poutput, err := helmClient.GetReleaseValues(kind) 
+	poutput, err := helmClient.GetReleaseValues(kind, true)
 	if err != nil {
 		panic(err)
 	}
@@ -77,6 +87,33 @@ func HelmRunScript(kubeconfig string, names []string, kind string, script *types
 	if err != nil {
 		panic(err)
 	}
-	is := yaml.GetBytes(template)
-	return nil, nil
+	services, ingresses := localyaml.GetBytes2(template)
+	hostList := searchHost(services, ingresses, target.Namespace)
+
+	poutput["host"] = hostList
+	return poutput, nil
+}
+
+func searchHost(services []types.Service, ingresses []types.Ingress, namespace string) (host []map[string]interface{}) {
+	svc := make(map[string]interface{})
+	svcList := []string{}
+	for _, s := range services {
+		for _, p := range s.Spec.Ports {
+			svcList = append(svcList, s.Metadata.Name+namespace+"svc.cluster.local"+":"+string(p.Port))
+		}
+
+	}
+	svc["service"] = svcList
+
+	ing := make(map[string]interface{})
+	ingList := []string{}
+	for _, s := range ingresses {
+		for _, p := range s.Spec.Rules {
+			ingList = append(ingList, p.Host)
+		}
+
+	}
+	ing["ingress"] = ingList
+	host = append(host, svc, ing)
+	return
 }
