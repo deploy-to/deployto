@@ -3,6 +3,7 @@ package src
 import (
 	"os"
 
+	"github.com/k0kubun/pp/v3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -15,4 +16,5 @@ func LogSetting() {
 	//	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	log.Debug().Msg("zerolog.DebugLevel")
+	pp.Default.SetColoringEnabled(false)
 }

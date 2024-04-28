@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/charmbracelet/huh v0.3.0
 	github.com/go-git/go-git/v5 v5.12.0
+	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/lithammer/shortuuid/v3 v3.0.7
 	github.com/rs/zerolog v1.32.0
 	github.com/urfave/cli/v2 v2.27.1

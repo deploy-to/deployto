@@ -3,12 +3,15 @@ kind: Component
 metadata:
   name: FullApplication
 spec:
-  dependencies:
-  - kind: component
-    name: service-a
-    root: true
-    repository: file://../service-a
+  script:
+    type: component
+    path: ../service-a
+  git:
+    comit: xxxxx
+  build:
+    job: BuildMePlease
+    image: xxx
+    repository: zzz
+    tag: cccc
+
 # service b is loaded depending on service a 
-
-
-

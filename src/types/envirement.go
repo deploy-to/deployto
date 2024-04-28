@@ -19,5 +19,5 @@ type Environment struct {
 
 type EnvironmentSpec struct {
 	Targets []string `json:"targets,omitempty" yaml:"targets,omitempty"`
-	Script  *Script  `json:"script,omitempty" yaml:"script,omitempty"`
+	Script  Values   `json:"values,omitempty" yaml:"values,omitempty"`
 }

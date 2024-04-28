@@ -2,5 +2,5 @@ package types
 
 type Target struct {
 	Base   `json:",inline" yaml:",inline"`
-	Script *Script `json:"script,omitempty" yaml:"script,omitempty"`
+	Script Values `json:"values,omitempty" yaml:"values,omitempty"`
 }

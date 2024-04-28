@@ -1,7 +1,8 @@
 package gitclient
 
 import (
-	"deployto/src/yaml"
+	"deployto/src/helper"
+	"deployto/src/types"
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
@@ -9,8 +10,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func GetValues(path string) map[string]string {
-	gitRoot, err := yaml.GetProjectRoot(path, ".git")
+func GetValues(path string) types.Values {
+	gitRoot, err := helper.GetProjectRoot(path, ".git")
 	if err != nil {
 		log.Error().Err(err).Msg("Search git root error")
 		return nil
@@ -38,7 +39,7 @@ func GetValues(path string) map[string]string {
 		return nil
 	}
 
-	values := make(map[string]string)
+	values := make(types.Values)
 	if s.IsClean() {
 		values["Commit"] = ref.Hash().String()
 		values["CommitShort"] = ref.Hash().String()[:7]

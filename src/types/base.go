@@ -19,17 +19,9 @@ type Base struct {
 
 const DeploytoPath = ".deployto" //TODO bug this const defined more then in one place
 
-func (b *Base) StatusGetPath() (path string) {
-	path = b.Status.FileName
-	for {
-		if filepath.Base(path) == DeploytoPath {
-			return filepath.Dir(path)
-		}
-		if len(path) < 4 /*TODO test on windows*/ {
-			return ""
-		}
-		path = filepath.Dir(b.Status.FileName)
-	}
+func (b *Base) GetDir() (path string) {
+	path = filepath.Dir(b.Status.FileName)
+	return path
 }
 
 type MetaData struct {

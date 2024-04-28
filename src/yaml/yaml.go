@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"deployto/src/helper"
 	"deployto/src/types"
 	"errors"
 	"os"
@@ -12,50 +13,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const DeploytoPath = ".deployto" //TODO bug this const defined more then in one place
-
-func GetDeploytoPath(path string) string {
-	return filepath.Join(path, DeploytoPath)
-}
-
-func SubPathExists(path string, subpath string) bool {
-	fi, err := os.Stat(filepath.Join(path, subpath))
-	if err == nil {
-		return fi.IsDir()
-	}
-	if !os.IsNotExist(err) {
-		log.Info().Err(err).Str("path", filepath.Join(path, subpath)).Msg("app path search error")
-	}
-	return false
-}
-
-func IsDeploytoPath(path string) bool {
-	_, file := filepath.Split(path)
-	return file == DeploytoPath || filepath.Base(path) == DeploytoPath
-}
-
-func GetProjectRoot(path string, searchDir string) (string, error) {
-	currentPath := path
-	for {
-		if currentPath == "/" || len(currentPath) < 4 /*TODO need test on windows*/ {
-			log.Error().Str("startPath", path).Str("currentPath", currentPath).Msg("getDeployToPaths end - too short path")
-			return "", errors.New("ROOT FOLDER NOT FOUND")
-		}
-
-		log.Debug().Str("path", currentPath).Msg("check dir")
-
-		if SubPathExists(currentPath, searchDir) {
-			return filepath.Join(currentPath, searchDir), nil
-		}
-		currentPath = filepath.Dir(currentPath)
-	}
-}
-
 // Ищу компоненты.
 // Начиная с указанной, проверяю все родительские папки на наличие в ней папки .deployto, когда найдена, то это и есть папка компоненты
 // Возвращаю все kind: Component из папки компоненты
 func GetComponent(path string) (comps []*types.Component, err error) {
-	rootPath, err := GetProjectRoot(path, DeploytoPath)
+	rootPath, err := helper.GetProjectRoot(path, helper.DeploytoPath)
 	if err != nil {
 		log.Error().Str("startPath", path).Msg("Project dir not found")
 		return nil, err
@@ -70,8 +32,8 @@ func GetComponent(path string) (comps []*types.Component, err error) {
 }
 
 func Get[T types.Component | types.Environment | types.Target | types.Job](deploytoPath string) (result []*T) {
-	if !IsDeploytoPath(deploytoPath) {
-		deploytoPath = GetDeploytoPath(deploytoPath)
+	if !helper.IsDeploytoPath(deploytoPath) {
+		deploytoPath = helper.GetDeploytoPath(deploytoPath)
 	}
 	err := filepath.Walk(deploytoPath,
 		func(path string, info os.FileInfo, err error) error {

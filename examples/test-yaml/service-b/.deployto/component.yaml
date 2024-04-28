@@ -4,9 +4,9 @@ metadata:
   name: serviceB
 spec:
   dependencies:
-  - kind: postgresql
-    name: only4b
-  - kind: postgresql
-    name: shared-db-between-services
+  - name: postgresql
+    alias: only4b
+  - name: postgresql
+    alias: shared-db-between-services
     root: true
-  - kind: s3
+  - name: s3
