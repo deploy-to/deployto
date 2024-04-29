@@ -49,21 +49,26 @@ func Exists(v Values, path string) bool {
 	return Exists(subMap, strings.Join(pathArr[1:], "."))
 }
 
-func MergeValues(v1, v2 Values) Values {
-	result := make(Values, len(v1))
-	for k, v := range v1 {
+func MergeValues(values ...Values) Values {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make(Values, len(values[0]))
+	for k, v := range values[0] {
 		result[k] = v
 	}
-	for k, v := range v2 {
-		if v, ok := v.(map[string]interface{}); ok {
-			if bv, ok := result[k]; ok {
-				if bv, ok := bv.(map[string]interface{}); ok {
-					result[k] = MergeValues(bv, v)
-					continue
+	for i := 1; i < len(values); i++ {
+		for k, v := range values[i] {
+			if v, ok := v.(map[string]interface{}); ok {
+				if bv, ok := result[k]; ok {
+					if bv, ok := bv.(map[string]interface{}); ok {
+						result[k] = MergeValues(bv, v)
+						continue
+					}
 				}
 			}
+			result[k] = v
 		}
-		result[k] = v
 	}
 	return result
 }

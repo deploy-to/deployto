@@ -1,121 +1,33 @@
-// у разработчика
 apiVersion: deployto.dev/v1beta1
 kind: Component
 metadata:
   name: serviceA
 spec:
   dependencies:
-  - name: service-b
-    values:
-      deployto:
-        stript:
-          type: component
-          repository: https://rep-service-b/service-b.git
-  - name: postgresql  # stript.type не указан, будет искать в репозитории шаблон postgresql, а если шаблон не найдётся, то попытаемся установить такой helm
-    #alias не указан, будет равен name
-  - name: postgresql  # type не указан, будет искать в репозитории шаблон postgresql, а если шаблон не найдётся, то попытаемся установить такой helm
-    alias: shared-db-between-services  # alias указан, будем в качестве идентефикатора в кубере и подобных хостов использовать shared-db-between-services
-    root: true
-  - name: s3
-    alias: serviceA-for-s3
+    build:
+      script:
+        type: job    # если values.name  не установлен, то использовать alias
+    service-b:
+      script:
+        type: component
+        values:
+#          repository: https://rep-service-b/service-b.git
+          path: ../../service-b
+    postgresql:
+    shared-db-between-services:
+      root: true
+      script:
+        type: template
+        values:
+          name: postgresql
+    s3:
+      script:
+        type: template
+        values:
+          name: s3/ha
   script:
     type: helm
-    repository: file://../helm
-  git:
-    comit: xxxxx
-  build:
-    image: xxx
-    repository: zzz
-    tag: cccc
-#после деплоя зависимостей, будут добавленны такие values
-    service-b:
-      deployto:                      #это то, что относится к деплою service-b
-        stript:
-          type: component
-          repository: https://rep-service-b/service-b.git
-        alias: service-b.serviceA
-        aliases:
-        - serviceA
-        - service-b
-        git:
-          comit: xxxxx   
-        build:
-          image:xxx
-          repository:zzz
-          tag: cccc
-  # Скопированно из зависимостей service-b
-  # - name: postgresql
-  #   alias: only4b
-  # - name: postgresql
-  #   alias: shared-db-between-services
-  #   root: true
-  # - name: s3
-  # сгенерированно
-      only4b:
-        deployto: 
-          alias: only4b.service-b.serviceA
-          aliases:
-          - serviceA
-          - service-b
-          - postgresql
-        Здесь будет всё, что будет в output у only4b  .   Т.е. в чартах у service-b , можно будет получить {{.Values.only4b.connectionstring}}
-      shared-db-between-services: # это будет у всех, 
-          alias: shared-db-between-service
-          aliases:
-          - shared-db-between-service
-        ...
-      s3:
-        ...
-
-
-
-
-
-// на сервере на уровне окружения dev пропишут
-apiVersion: deployto.dev/v1beta1
-kind: Component
-metadata:
-  name: serviceA
-spec:
-  dependencies:
-  # service-b не указан - его описание не меняется
-  - name: postgresql #в исходном postgresql найден name=postgresql && alias == "": для него полностью меняется скрипт
     values:
-      deployto:
-        type: template
-        name: postgresql/teraform-yandex
-  # остально не найдено, деплоится ровно так, как прописано у разработчика
-
-// на таргете пропишут
-apiVersion: deployto.dev/v1beta1
-kind: Component
-metadata:
-  name: serviceA
-spec:
-  dependencies:
-  # ранее указанные dependencies не вспоминаются - они никак не меняются
-  - name: monitoring    # добавится зависимость из темплейта monitoring
-
-// при каждом деплое на окружении создаётся файл, который был сформирован, по результатам деплоя. И который можно применять в качестве исходника, для 
-apiVersion: deployto.dev/v1beta1
-kind: Component
-metadata:
-  name: Component
-  version: 1.1.1
-spec:
-  dependencies:
-    # name: service-b не указан, значит он останется без изменений 
-  - kind: component
-    name: service-b
-    repository: https://rep-service-b/service-b.git
-    version: 0.0.1
-  - kind: postgresql
-    type: component
-    как сделать укзание, на использования шаблона        postgresql/ha
-  - kind: template
-    template: postgresql
-    name: shared-db-between-services
-    root: true
-  - kind: template
-    template: s3
-    name: serviceA-for-s3
+      repository: file://../helm
+      build:
+        image: deployto-lookup build.image

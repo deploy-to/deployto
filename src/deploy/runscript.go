@@ -3,32 +3,54 @@ package deploy
 import (
 	"deployto/src/types"
 	"errors"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 )
 
-type RunScriptFunc = func(kubeconfig string, workdir string, name string, alias string, aliases []string, rootValues, input types.Values) (output map[string]any, err error)
+type RunScriptFuncImplementationType = func(kubeconfig string, workdir string, aliases []string, rootValues, values types.Values) (output map[string]any, err error)
 
-var RunScripts = map[string]RunScriptFunc{}
+var RunScriptFuncImplementations = map[string]RunScriptFuncImplementationType{}
 
-func RunScript(kubeconfig string, workdir string, name string, alias string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
-	l := log.With().Strs("names", aliases).Logger()
-	if !types.Exists(input, "script") {
-		l.Debug().Any("input", input).Msg("Script not defined")
+func RunScript(kubeconfig string, workdir string, aliases []string, rootValues, script, scriptContext types.Values) (output types.Values, err error) {
+	l := log.With().Strs("aliases", aliases).Logger()
+	if script == nil {
+		l.Debug().Msg("Script not defined")
 		return nil, nil
 	}
-	scriptType := types.Get(input, "component", "script.type")
-	l.Debug().Str("scriptType", scriptType).Any("input", input).Msg("RunScript")
+	scriptType := types.Get(script, "template", "type")
+	l.Debug().Str("scriptType", scriptType).Any("input", script).Msg("RunScript")
 
-	//repository!!!!!!!!!
+	input := lookupValues(types.Get(script, types.Values(nil), "values"), scriptContext)
 
-	//alias := types.Get(input, "", "script.alias")
-
-	if runScript, ok := RunScripts[scriptType]; ok {
+	if runScript, ok := RunScriptFuncImplementations[scriptType]; ok {
 		return runScript(kubeconfig, workdir,
-			types.Get(input, "", "script.name"), alias, append(aliases, alias),
+			aliases,
 			rootValues, input)
 	}
 	l.Error().Str("scriptType", scriptType).Msg("RunScript function not found")
 	return nil, errors.New("RUNSCRIPT FUNCTION NOT FOUND")
+}
+
+func lookupValues(scripValues, scriptContext types.Values) types.Values {
+	if scripValues == nil {
+		return nil
+	}
+	result := make(types.Values, len(scripValues))
+
+	for k, v := range scripValues {
+		if v, ok := v.(types.Values); ok {
+			result[k] = lookupValues(v, scriptContext)
+			continue
+		}
+		if deploytoStr, ok := v.(string); ok {
+			if deploytoStr, ok = strings.CutPrefix(deploytoStr, "__deployto-lookup:"); ok {
+				deploytoStr = strings.Trim(deploytoStr, " ")
+				result[k] = types.Get(scriptContext, "", deploytoStr)
+				continue
+			}
+		}
+		result[k] = v
+	}
+	return result
 }

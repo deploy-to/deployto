@@ -5,13 +5,6 @@ metadata:
 spec:
   script:
     type: component
-    path: ../service-a
-  git:
-    comit: xxxxx
-  build:
-    job: BuildMePlease
-    image: xxx
-    repository: zzz
-    tag: cccc
-
-# service b is loaded depending on service a 
+    root: true
+    values:
+      path: ../service-a

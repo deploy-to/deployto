@@ -69,10 +69,11 @@ func Deployto(cCtx *cli.Context) error {
 	}
 
 	rootValues := make(types.Values)
+	//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
 	_, e := deploy.Component("TODO, for each target",
 		path,
-		"", "", nil,
-		rootValues, make(types.Values))
+		nil,
+		rootValues, types.Values(nil))
 	if e != nil {
 		log.Error().Err(e).Msg("Component deploy error")
 		err = errors.Join(err, e)

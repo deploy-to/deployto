@@ -1,11 +1,16 @@
 package deploy
 
-// func init() {
-// 	RunScripts["helm"] = HelmRunScript
-// }
+import (
+	"deployto/src/types"
 
-// func HelmRunScript(kubeconfig string, names []string, kind string, script any /*TODO REMOVE*/, input map[string]any) (output map[string]any, err error) {
-// 	// эта функци будет вызыватсья только для script.type = helm
-// 	// для script.type == helm, атрибут kind можно игнорировать
-// 	return nil, nil
-// }
+	"github.com/rs/zerolog/log"
+)
+
+func init() {
+	RunScriptFuncImplementations["helm"] = Helm
+}
+
+func Helm(kubeconfig string, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+	log.Error().Msg("Заглушка, для деплоя Helm")
+	return nil, nil
+}

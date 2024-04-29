@@ -4,9 +4,24 @@ metadata:
   name: serviceB
 spec:
   dependencies:
-  - name: postgresql
-    alias: only4b
-  - name: postgresql
-    alias: shared-db-between-services
-    root: true
-  - name: s3
+    build:
+      script:
+        type: job
+    only4b:
+      script:
+        type: template
+        values:
+          name: postgresql
+    shared-db-between-services:
+      root: true
+      script:
+        type: template
+        values:
+          name: postgresql
+    s3:
+  script:
+    type: helm
+    values:
+      repository: file://../helm
+      build:
+        image: deployto-lookup build.image
