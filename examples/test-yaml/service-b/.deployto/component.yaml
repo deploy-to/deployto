@@ -5,23 +5,16 @@ metadata:
 spec:
   dependencies:
     build:
-      script:
-        type: job
+      type: job
     only4b:
-      script:
-        type: template
-        values:
-          name: postgresql
+      name: postgresql
     shared-db-between-services:
       root: true
-      script:
-        type: template
-        values:
-          name: postgresql
+      name: postgresql
     s3:
   script:
     type: helm
-    values:
-      repository: file://../helm
-      build:
-        image: deployto-lookup build.image
+    repository: file://../helm
+    image: "__deployto-lookup: build.image"
+    my-database: "__deployto-lookup: build.image"
+    shared-db: "__deployto-lookup: shared-db-between-services.ConnectionString"

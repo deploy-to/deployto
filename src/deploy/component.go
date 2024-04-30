@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 )
 
@@ -37,12 +36,13 @@ func Component(kubeconfig string, workdir string, aliases []string, rootValues, 
 	for _, c := range comps {
 		workdir = c.GetDir()
 
+		compScript := types.DecodeScript(types.Get(c.Spec, types.Values(nil), "script"))
 		var aliases []string
-		alias := types.Get(input, c.Meta.Name, "alias")
-		if types.Get(input, false, "root") {
-			aliases = []string{alias}
+		if compScript.Root {
+			log.Debug().Strs("aliases", aliases).Str("component", c.Meta.Name).Msg("Component script is root")
+			aliases = []string{c.Meta.Name}
 		} else {
-			aliases = append(aliases, alias)
+			aliases = append(aliases, c.Meta.Name)
 		}
 
 		l := log.With().Strs("aliases", aliases).Logger()
@@ -54,32 +54,25 @@ func Component(kubeconfig string, workdir string, aliases []string, rootValues, 
 
 		dependencies := types.Get(c.Spec, map[string]any(nil), "dependencies")
 		for alias, dependencyAsMap := range dependencies {
-			var d types.Dependency
-			err := mapstructure.Decode(dependencyAsMap, &d)
-			if err != nil {
-				l.Error().Str("alias", alias).Err(err).Msg("dependency is not types.Dependency")
-				return nil, err
-			}
-			dependencyAliases := append(aliases, alias)
-			if d.Root {
-				dependencyAliases = []string{alias}
-			}
+			d := types.DecodeScript(dependencyAsMap)
 
-			if theDependencyWasDeployedEarlier, ok := rootValues[buildAlias(aliases)]; ok {
-				l.Info().Strs("alias", dependencyAliases).Msg("Deployed earlier")
-				dependenciesOutput[alias] = theDependencyWasDeployedEarlier
-				continue
+			var dependencyAliases []string
+			if compScript.Root {
+				log.Debug().Strs("aliases", aliases).Str("dependency", alias).Msg("Dependency is root")
+				dependencyAliases = []string{alias}
+			} else {
+				dependencyAliases = append(aliases, alias)
 			}
 
 			dependencyOutput, e := RunScript(kubeconfig, workdir,
 				dependencyAliases,
 				rootValues,
-				d.Script, input)
+				d, input)
 			if e != nil {
 				l.Error().Err(e).Msg("RunScript error")
 			}
 			dependenciesOutput[alias] = dependencyOutput
-			if d.Root {
+			if d != nil && d.Root {
 				rootValues[alias] = dependencyOutput
 			}
 		}
@@ -88,7 +81,7 @@ func Component(kubeconfig string, workdir string, aliases []string, rootValues, 
 		scriptOutput, e := RunScript(kubeconfig, workdir,
 			aliases,
 			rootValues,
-			types.Get(c.Spec, types.Values(nil), "script"), scriptContext)
+			compScript, scriptContext)
 		if e != nil {
 			l.Error().Err(e).Msg("RunScript error")
 		}

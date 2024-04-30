@@ -42,11 +42,11 @@ func GetProjectRoot(path string, searchDir string) (string, error) {
 			return "", errors.New("ROOT FOLDER NOT FOUND")
 		}
 
-		log.Debug().Str("path", currentPath).Msg("check dir")
-
 		if IsSubPathExists(currentPath, searchDir) {
+			log.Debug().Str("searchDir", searchDir).Str("path", currentPath).Msg("searchDir found")
 			return filepath.Join(currentPath, searchDir), nil
 		}
+		log.Debug().Str("searchDir", searchDir).Str("path", currentPath).Msg("searchDir not found - go to parent")
 		currentPath = filepath.Dir(currentPath)
 	}
 }

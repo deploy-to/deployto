@@ -5,29 +5,21 @@ metadata:
 spec:
   dependencies:
     build:
-      script:
-        type: job    # если values.name  не установлен, то использовать alias
+      type: job    # если values.name  не установлен, то использовать alias
     service-b:
-      script:
-        type: component
-        values:
-#          repository: https://rep-service-b/service-b.git
-          path: ../../service-b
+      type: component
+#      repository: https://rep-service-b/service-b.git
+      path: ../../service-b
     postgresql:
     shared-db-between-services:
       root: true
-      script:
-        type: template
-        values:
-          name: postgresql
+      name: postgresql
     s3:
-      script:
-        type: template
-        values:
-          name: s3/ha
+      name: s3/ha
   script:
     type: helm
-    values:
-      repository: file://../helm
-      build:
-        image: deployto-lookup build.image
+    repository: file://../helm
+    build:
+      image: "__deployto-lookup: build.image"
+    shared-db: "__deployto-lookup: shared-db-between-services.ConnectionString"
+    s3: "__deployto-lookup: s3.ConnectionString"

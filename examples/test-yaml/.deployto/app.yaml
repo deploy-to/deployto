@@ -6,5 +6,4 @@ spec:
   script:
     type: component
     root: true
-    values:
-      path: ../service-a
+    path: ../service-a
