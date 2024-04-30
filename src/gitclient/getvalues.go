@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/lithammer/shortuuid/v3"
 	"github.com/rs/zerolog/log"
 )
@@ -39,19 +40,28 @@ func GetValues(path string) types.Values {
 		return nil
 	}
 
+	//Find Tag (semver or another one)
+	tag, err := rep.TagObject(ref.Hash())
+	switch err {
+	case nil:
+	// Tag object present
+	case plumbing.ErrObjectNotFound:
+	// Not a tag object
+	default:
+		// Some other error
+	}
+
 	values := make(types.Values)
 	if s.IsClean() {
 		values["Commit"] = ref.Hash().String()
 		values["CommitShort"] = ref.Hash().String()[:7]
+		values["Tag"] = tag.Name
 	} else {
 		uuid := shortuuid.New()
 		values["Commit"] = ref.Hash().String() + "+dirty.uuid" + uuid
 		values["CommitShort"] = ref.Hash().String()[:7] + "+dirty.uuid" + uuid
+		values["Tag"] = tag.Name + uuid
 	}
-
-	//TODO add semver
-	//TODO add semver-patchHASH   (if clear commit)
-	//TODO add semver-changedUuid (if not clear commit)
 
 	log.Debug().Any("values", values).Msg("gitclient.GetValues")
 
