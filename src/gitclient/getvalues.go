@@ -44,11 +44,10 @@ func GetValues(path string) types.Values {
 	tag, err := rep.TagObject(ref.Hash())
 	switch err {
 	case nil:
+		log.Error().Err(err).Msg("Error getting git tag")
 	// Tag object present
 	case plumbing.ErrObjectNotFound:
-	// Not a tag object
-	default:
-		// Some other error
+		log.Error().Err(err).Msg("Error getting git tag")
 	}
 
 	values := make(types.Values)
