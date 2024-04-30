@@ -13,7 +13,6 @@ import (
 
 func main() {
 	stg := types.Settings{}
-	src.LogSetting(stg)
 
 	app := &cli.App{
 		Name:  "deployto",
@@ -24,6 +23,7 @@ func main() {
 			cmd.Job,
 		},
 		Action: func(cCtx *cli.Context) error {
+			src.LogSetting(stg)
 			return cmd.Deployto(cCtx)
 		},
 		Flags: []cli.Flag{
@@ -43,7 +43,6 @@ func main() {
 			},
 		},
 	}
-
 	sort.Sort(cli.FlagsByName(app.Flags))
 	sort.Sort(cli.CommandsByName(app.Commands))
 

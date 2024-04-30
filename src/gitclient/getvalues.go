@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/lithammer/shortuuid/v3"
 	"github.com/rs/zerolog/log"
 )
@@ -41,25 +42,30 @@ func GetValues(path string) types.Values {
 	}
 
 	//Find Tag (semver or another one)
-	tag, err := rep.TagObject(ref.Hash())
+	Tag, err := rep.TagObject(ref.Hash())
 	switch err {
 	case nil:
 		log.Error().Err(err).Msg("Error getting git tag")
+
 	// Tag object present
 	case plumbing.ErrObjectNotFound:
 		log.Error().Err(err).Msg("Error getting git tag")
+		//Default tag is empty
+		Tag = &object.Tag{
+			Name: "",
+		}
 	}
 
 	values := make(types.Values)
 	if s.IsClean() {
 		values["Commit"] = ref.Hash().String()
 		values["CommitShort"] = ref.Hash().String()[:7]
-		values["Tag"] = tag.Name
+		values["Tag"] = Tag.Name
 	} else {
 		uuid := shortuuid.New()
 		values["Commit"] = ref.Hash().String() + "+dirty.uuid" + uuid
 		values["CommitShort"] = ref.Hash().String()[:7] + "+dirty.uuid" + uuid
-		values["Tag"] = tag.Name + uuid
+		values["Tag"] = Tag.Name + uuid
 	}
 
 	log.Debug().Any("values", values).Msg("gitclient.GetValues")

@@ -33,7 +33,7 @@ func LogSetting(stg types.Settings) {
 
 	switch stg.Logformat {
 	case "pretty":
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
 	zerolog.TimeFieldFormat = time.DateTime
