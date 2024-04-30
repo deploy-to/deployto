@@ -3,6 +3,7 @@ package main
 import (
 	"deployto/src"
 	"deployto/src/cmd"
+	"deployto/src/types"
 	"os"
 	"sort"
 
@@ -11,7 +12,8 @@ import (
 )
 
 func main() {
-	src.LogSetting()
+	stg := types.Settings{}
+	src.LogSetting(stg)
 
 	app := &cli.App{
 		Name:  "deployto",
@@ -23,6 +25,22 @@ func main() {
 		},
 		Action: func(cCtx *cli.Context) error {
 			return cmd.Deployto(cCtx)
+		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "log-format",
+				Aliases:     []string{"lg"},
+				Value:       "pretty",
+				Usage:       "Log Format: json, pretty",
+				Destination: &stg.Logformat,
+			},
+			&cli.StringFlag{
+				Name:        "log-level",
+				Aliases:     []string{"ll"},
+				Value:       "info",
+				Usage:       "Log level: trace, debug, warn, info, fatal, panic, absent, disable",
+				Destination: &stg.Loglevel,
+			},
 		},
 	}
 
