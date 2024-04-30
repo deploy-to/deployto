@@ -68,18 +68,24 @@ func (cww *ContextWrappedWriter) ReadFrom(r io.Reader) (n int64, err error) {
 	}
 }
 
-func callJob(cCtx *cli.Context) error {
-	path, err := os.Getwd()
-	if err != nil {
-		log.Error().Err(err).Msg("Get workdir error")
-		return err
+func callJob(cCtx *cli.Context, workdirpath string, input map[string]any) (output map[string]any, err error) {
+	// set path
+	var path string
+	if workdirpath != "" {
+		path = workdirpath
+	} else {
+		path, err = os.Getwd()
+		if err != nil {
+			log.Error().Err(err).Msg("Get workdir error")
+			return nil, err
+		}
 	}
 
 	// Application
 	apps := yaml.Get[types.Job](path)
 	if len(apps) != 1 {
 		log.Error().Int("len(app)", len(apps)).Str("path", path).Msg("wait one app")
-		return errors.New("APP NOT FOUND")
+		return nil, errors.New("APP NOT FOUND")
 	}
 	cCtx.Args()
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Minute)
@@ -93,15 +99,31 @@ func callJob(cCtx *cli.Context) error {
 					var Stdout, Stderr bytes.Buffer
 
 					c := exec.CommandContext(ctx, ccc[0], ccc[1:]...)
+					c.Env = append(os.Environ(),
+						"GIT_HASH="+input["CommitShort"].(string),
+						"APPLICATION_NAME="+input["name"].(string),
+						"DOCKER_REGISTRY="+input["registry"].(string),
+					)
 					c.Stderr = &ContextWrappedWriter{&Stderr, ctx}
 					c.Stdout = &ContextWrappedWriter{&Stdout, ctx}
 					err := c.Run()
 					if err != nil {
 						timeoutMsg := "Ci Stoped, timeout" + cCtx.String("citimeout")
 						log.Error().Err(err).Msg(timeoutMsg)
+						return nil, err
 					}
 					fmt.Println(Stderr.String())
 					fmt.Println(Stdout.String())
+					//check image exist
+					d := exec.CommandContext(ctx, "docker", "image", "inspect", input["registry"].(string)+"/"+input["name"].(string)+":"+input["CommitShort"].(string))
+
+					err = d.Run()
+					if err != nil {
+						timeoutMsg := "Ci Stoped, timeout" + cCtx.String("citimeout")
+						log.Error().Err(err).Msg(timeoutMsg)
+						return nil, err
+					}
+					output["build"] = input["registry"].(string) + "/" + input["name"].(string) + ":" + input["CommitShort"].(string)
 				}
 
 			}
@@ -110,7 +132,7 @@ func callJob(cCtx *cli.Context) error {
 
 	}
 
-	return nil
+	return
 }
 
 var timeout int
@@ -125,7 +147,7 @@ var Job = &cli.Command{
 			Usage: "run a job",
 			Action: func(cCtx *cli.Context) error {
 				fmt.Println("new Job Run: ", cCtx.Args().First())
-				err := callJob(cCtx)
+				_, err := callJob(cCtx, "", nil)
 
 				if err != nil {
 					log.Err(err).Msg("huh.NewInput()...Run() error")
