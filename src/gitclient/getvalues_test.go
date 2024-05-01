@@ -59,17 +59,18 @@ func TestGetValues(t *testing.T) {
 	})
 	checkIfError(t, err)
 	// TODO check output["Tag"]
-	setTag(r, "v1.0.0", &object.Signature{
+	_, err = setTag(r, "v1.0.0", &object.Signature{
 		Name:  "John Doe",
 		Email: "john@doe.org",
 		When:  time.Now(),
 	})
-
-	setTag(r, "v1.0.1", &object.Signature{
+	checkIfError(t, err)
+	_, err = setTag(r, "v1.0.1", &object.Signature{
 		Name:  "John Doe",
 		Email: "john@doe.org",
 		When:  time.Now(),
 	})
+	checkIfError(t, err)
 	output = GetValues(tmpDir)
 	if len(output) != 3 {
 		t.Errorf("git first commit: the output does not contain 2 elements: %v", output)
@@ -86,17 +87,18 @@ func TestGetValues(t *testing.T) {
 
 	//dirty git
 	doChange(t, tmpDir)
-	setTag(r, "v1.0.0", &object.Signature{
+	_, err = setTag(r, "v1.0.0", &object.Signature{
 		Name:  "John Doe",
 		Email: "john@doe.org",
 		When:  time.Now(),
 	})
-
-	setTag(r, "v1.0.1", &object.Signature{
+	checkIfError(t, err)
+	_, err = setTag(r, "v1.0.1", &object.Signature{
 		Name:  "John Doe",
 		Email: "john@doe.org",
 		When:  time.Now(),
 	})
+	checkIfError(t, err)
 	output = GetValues(tmpDir)
 	if len(output) != 3 {
 		t.Errorf("dirty git: the output does not contain 3 elements: %v", output)
