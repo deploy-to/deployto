@@ -58,38 +58,6 @@ func TestGetValues(t *testing.T) {
 		},
 	})
 	checkIfError(t, err)
-
-	output = GetValues(tmpDir)
-	if len(output) != 2 {
-		t.Errorf("git first commit: the output does not contain 2 elements: %v", output)
-	}
-	if output["Commit"] != commit.String() {
-		t.Errorf("git first commit: GetValues()[Commit] = %v, want %v", output, commit.String())
-	}
-	if output["CommitShort"] != commit.String()[:7] {
-		t.Errorf("git first commit: GetValues()[Commit] = %v, want %v", output, commit.String()[:7])
-	}
-
-	//dirty git
-	doChange(t, tmpDir)
-
-	output = GetValues(tmpDir)
-	if len(output) != 2 {
-		t.Errorf("dirty git: the output does not contain 2 elements: %v", output)
-	}
-	if !strings.HasPrefix(output["Commit"].(string), commit.String()) {
-		t.Errorf("dirty git: prefix error: GetValues()[Commit] = %v, want %v", output, commit.String())
-	}
-	if !strings.HasPrefix(output["CommitShort"].(string), commit.String()[:7]) {
-		t.Errorf("dirty git: prefix error: GetValues()[CommitShort] = %v, want %v", output, commit.String()[:7])
-	}
-	if !strings.Contains(output["Commit"].(string), "+dirty.uuid") {
-		t.Errorf("dirty git: dirty mark not exists: GetValues()[CommitShort] = %v", output)
-	}
-	if !strings.Contains(output["CommitShort"].(string), "+dirty.uuid") {
-		t.Errorf("dirty git: dirty mark not exists: GetValues()[CommitShort] = %v", output)
-	}
-
 	// TODO check output["Tag"]
 	setTag(r, "v1.0.0", &object.Signature{
 		Name:  "John Doe",
@@ -103,9 +71,55 @@ func TestGetValues(t *testing.T) {
 		When:  time.Now(),
 	})
 	output = GetValues(tmpDir)
+	if len(output) != 3 {
+		t.Errorf("git first commit: the output does not contain 2 elements: %v", output)
+	}
+	if output["Commit"] != commit.String() {
+		t.Errorf("git first commit: GetValues()[Commit] = %v, want %v", output, commit.String())
+	}
+	if output["CommitShort"] != commit.String()[:7] {
+		t.Errorf("git first commit: GetValues()[Commit] = %v, want %v", output, commit.String()[:7])
+	}
 	if output["Tag"] != "v1.0.1" {
 		t.Errorf("git first commit: GetValues()[Tag] = %v, want %v", output, "v1.0.1")
 	}
+
+	//dirty git
+	doChange(t, tmpDir)
+	setTag(r, "v1.0.0", &object.Signature{
+		Name:  "John Doe",
+		Email: "john@doe.org",
+		When:  time.Now(),
+	})
+
+	setTag(r, "v1.0.1", &object.Signature{
+		Name:  "John Doe",
+		Email: "john@doe.org",
+		When:  time.Now(),
+	})
+	output = GetValues(tmpDir)
+	if len(output) != 3 {
+		t.Errorf("dirty git: the output does not contain 3 elements: %v", output)
+	}
+	if !strings.HasPrefix(output["Commit"].(string), commit.String()) {
+		t.Errorf("dirty git: prefix error: GetValues()[Commit] = %v, want %v", output, commit.String())
+	}
+	if !strings.HasPrefix(output["CommitShort"].(string), commit.String()[:7]) {
+		t.Errorf("dirty git: prefix error: GetValues()[CommitShort] = %v, want %v", output, commit.String()[:7])
+	}
+	if !strings.Contains(output["Commit"].(string), "+dirty.uuid") {
+		t.Errorf("dirty git: dirty mark not exists: GetValues()[CommitShort] = %v", output)
+	}
+	if !strings.Contains(output["CommitShort"].(string), "+dirty.uuid") {
+		t.Errorf("dirty git: dirty mark not exists: GetValues()[CommitShort] = %v", output)
+	}
+	if !strings.Contains(output["Tag"].(string), "+dirty.uuid") {
+		t.Errorf("dirty git: dirty mark not exists: GetValues()[Tag] = %v", output)
+	}
+	if !strings.HasPrefix(output["Tag"].(string), "v1.0.1") {
+		t.Errorf("dirty git: prefix error: GetValues()[Tag] = %v, want %v", output, "v1.0.1")
+	}
+
 }
 
 func doChange(t *testing.T, tmpDir string) {

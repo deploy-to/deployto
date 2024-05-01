@@ -60,9 +60,7 @@ func GetValues(path string) (values types.Values) {
 	}
 	var Tags []string
 	err = tagrefs.ForEach(func(t *plumbing.Reference) error {
-		if t.Hash().String() == ref.Hash().String() {
-			Tags = append(Tags, t.Name().Short())
-		}
+		Tags = append(Tags, t.Name().Short())
 		return nil
 	})
 	if err != nil {
