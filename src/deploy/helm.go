@@ -17,24 +17,30 @@ func init() {
 	RunScripts["helm"] = HelmRunScript
 }
 
-func HelmRunScript(kubeconfig string, names []string, kind string, script *types.Script, target *types.Target, input map[string]any) (output map[string]any, err error) {
+func HelmRunScript(names []string, kind string, script *types.Script, target *types.Target, input map[string]any) (output map[string]any, err error) {
 	// эта функци будет вызыватсья только для script.type = helm
 	// для script.type == helm, атрибут kind можно игнорировать
 	var outputBuffer bytes.Buffer
 	// log.Error().Err(err).Str("path", path).Msg("Application/Components search error")
 	// log.Debug().Str("environment", environmentArg).Msg("start deployto")
 	//set settings for helm
-	opt := &helmclient.Options{
-		Namespace:        target.Namespace, // Change this to the namespace you wish the client to operate in.
-		RepositoryCache:  "/tmp/.helmcache",
-		RepositoryConfig: "/tmp/.helmrepo",
-		Debug:            true,
-		Linting:          true,
-		DebugLog:         func(format string, v ...interface{}) {},
-		Output:           &outputBuffer, // Not mandatory, leave open for default os.Stdout
+	opt := &helmclient.KubeConfClientOptions{
+		Options: &helmclient.Options{
+			Namespace:        target.Namespace, // Change this to the namespace you wish to install the chart in.
+			RepositoryCache:  "/tmp/.helmcache",
+			RepositoryConfig: "/tmp/.helmrepo",
+			Debug:            true,
+			Linting:          true, // Change this to false if you don't want linting.
+			DebugLog: func(format string, v ...interface{}) {
+			},
+			Output: &outputBuffer, // Not mandatory, leave open for default os.Stdout
+		},
+		KubeContext: "",
+		KubeConfig:  target.Kubeconfig,
 	}
-	// init helm client
-	helmClient, err := helmclient.New(opt)
+
+	helmClient, err := helmclient.NewClientFromKubeConf(opt)
+
 	if err != nil {
 		log.Error().Err(err).Msg("Create helm client error")
 		return nil, err

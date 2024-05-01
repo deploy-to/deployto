@@ -122,7 +122,7 @@ func Deploy(kubeconfig string, aliases []string, as *types.ComponentSpec, values
 		}
 
 		l.Debug().Strs("alias", dependencyAliases).Msg("TODO Run dependency")
-		o, e := RunScript(kubeconfig, dependencyAliases, d.Kind, d.Script, values)
+		o, e := RunScript(dependencyAliases, d.Kind, d.Script, values)
 		if e != nil {
 			l.Error().Err(e).Msg("RunScript error")
 			resultError = errors.Join(resultError, e)
@@ -130,7 +130,7 @@ func Deploy(kubeconfig string, aliases []string, as *types.ComponentSpec, values
 		values[buildAlias(dependencyAliases)] = o
 	}
 	// Run script
-	o, e := RunScript(kubeconfig, aliases, "component", as.Script, values)
+	o, e := RunScript(aliases, "component", as.Script, values)
 	if e != nil {
 		l.Error().Err(e).Msg("RunScript error")
 		resultError = errors.Join(resultError, e)
@@ -144,18 +144,23 @@ func buildAlias(names []string) string {
 	return strings.Join(names, "-")
 }
 
-func RunScript(kubeconfig string, names []string, kind string, script *types.Script, input map[string]any) (output map[string]any, err error) {
+func RunScript(names []string, kind string, script *types.Script, input map[string]any) (output map[string]any, err error) {
 	l := log.With().Strs("names", names).Logger()
 	if script == nil {
 		l.Debug().Msg("Script not defined")
 		return nil, nil
 	}
+	// TODO на момент вызова RunSript нуже таргет??
+	t := types.Target{
+		Namespace:  "test",
+		Kubeconfig: []byte{},
+	}
 	l.Debug().Str("scriptType", script.Type).Msg("Run script")
 	if runScript, ok := deploy.RunScripts[script.Type]; ok {
-		return runScript(kubeconfig, names, kind, script, input)
+		return runScript(names, kind, script, &t, input)
 	}
 	if runScript, ok := deploy.RunScripts["component"]; ok {
-		return runScript(kubeconfig, names, kind, script, input)
+		return runScript(names, kind, script, &t, input)
 	}
 
 	l.Error().Msg("RunScripts function not found")
