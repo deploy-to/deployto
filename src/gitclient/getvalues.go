@@ -10,22 +10,27 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func GetValues(path string) types.Values {
+func GetValues(path string) (values types.Values) {
+	values = make(types.Values)
+	dirtyPostfix := "+dirty.uuid" + shortuuid.New()
+	values["Commit"] = "NO_GIT" + dirtyPostfix
+	values["CommitShort"] = "NO_GIT" + dirtyPostfix
+
 	gitRoot, err := helper.GetProjectRoot(path, ".git")
 	if err != nil {
 		log.Error().Err(err).Msg("Search git root error")
-		return nil
+		return
 	}
 
 	rep, err := git.PlainOpen(filepath.Dir(gitRoot))
 	if err != nil {
 		log.Error().Err(err).Msg("Error opening git repository")
-		return nil
+		return
 	}
 	ref, err := rep.Head()
 	if err != nil {
 		log.Warn().Err(err).Msg("Error getting git Head")
-		return nil
+		return
 	}
 
 	wt, err := rep.Worktree()
@@ -36,15 +41,13 @@ func GetValues(path string) types.Values {
 	s, err := wt.Status()
 	if err != nil {
 		log.Error().Err(err).Msg("Error getting git Status")
-		return nil
+		return
 	}
 
-	var dirtyPostfix string
-	if !s.IsClean() {
-		dirtyPostfix = "+dirty.uuid" + shortuuid.New()
+	if s.IsClean() {
+		dirtyPostfix = ""
 	}
 
-	values := make(types.Values)
 	values["Commit"] = ref.Hash().String() + dirtyPostfix
 	values["CommitShort"] = ref.Hash().String()[:7] + dirtyPostfix
 

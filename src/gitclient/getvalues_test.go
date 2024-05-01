@@ -29,8 +29,20 @@ func TestGetValues(t *testing.T) {
 	checkIfError(t, err)
 
 	output := GetValues(tmpDir)
-	if len(output) != 0 {
-		t.Errorf("git just init: GetValues() = %v, want len==0", output)
+	if len(output) != 2 {
+		t.Errorf("git just init: the output does not contain 2 elements: %v", output)
+	}
+	if !strings.HasPrefix(output["Commit"].(string), "NO_GIT") {
+		t.Errorf("git just init: prefix error: GetValues()[Commit] = %v, want %v", output, "NO_GIT")
+	}
+	if !strings.HasPrefix(output["CommitShort"].(string), "NO_GIT") {
+		t.Errorf("git just init: prefix error: GetValues()[CommitShort] = %v, want %v", output, "NO_GIT")
+	}
+	if !strings.Contains(output["Commit"].(string), "+dirty.uuid") {
+		t.Errorf("git just init: dirty mark not exists: GetValues()[CommitShort] = %v", output)
+	}
+	if !strings.Contains(output["CommitShort"].(string), "+dirty.uuid") {
+		t.Errorf("git just init: dirty mark not exists: GetValues()[CommitShort] = %v", output)
 	}
 
 	//git first commit
