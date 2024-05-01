@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/lithammer/shortuuid/v3"
 	"github.com/rs/zerolog/log"
 )
@@ -26,7 +24,7 @@ func GetValues(path string) types.Values {
 	}
 	ref, err := rep.Head()
 	if err != nil {
-		log.Error().Err(err).Msg("Error getting git Head")
+		log.Warn().Err(err).Msg("Error getting git Head")
 		return nil
 	}
 
@@ -41,31 +39,22 @@ func GetValues(path string) types.Values {
 		return nil
 	}
 
-	//Find Tag (semver or another one)
-	Tag, err := rep.TagObject(ref.Hash())
-	switch err {
-	case nil:
-		log.Error().Err(err).Msg("Error getting git tag")
-
-	// Tag object present
-	case plumbing.ErrObjectNotFound:
-		log.Error().Err(err).Msg("Error getting git tag")
-		//Default tag is empty
-		Tag = &object.Tag{
-			Name: "",
-		}
+	var dirtyPostfix string
+	if !s.IsClean() {
+		dirtyPostfix = "+dirty.uuid" + shortuuid.New()
 	}
 
 	values := make(types.Values)
-	if s.IsClean() {
-		values["Commit"] = ref.Hash().String()
-		values["CommitShort"] = ref.Hash().String()[:7]
-		values["Tag"] = Tag.Name
-	} else {
-		uuid := shortuuid.New()
-		values["Commit"] = ref.Hash().String() + "+dirty.uuid" + uuid
-		values["CommitShort"] = ref.Hash().String()[:7] + "+dirty.uuid" + uuid
-		values["Tag"] = Tag.Name + uuid
+	values["Commit"] = ref.Hash().String() + dirtyPostfix
+	values["CommitShort"] = ref.Hash().String()[:7] + dirtyPostfix
+
+	//Find tag (semver or another one)
+	tag, err := rep.TagObject(ref.Hash())
+	if err != nil {
+		log.Debug().Err(err).Msg("Git tag not found")
+	}
+	if tag != nil {
+		values["Tag"] = tag.Name + dirtyPostfix
 	}
 
 	log.Debug().Any("values", values).Msg("gitclient.GetValues")
