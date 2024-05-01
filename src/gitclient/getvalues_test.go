@@ -1,6 +1,7 @@
 package gitclient
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -90,6 +91,21 @@ func TestGetValues(t *testing.T) {
 	}
 
 	// TODO check output["Tag"]
+	setTag(r, "v1.0.0", &object.Signature{
+		Name:  "John Doe",
+		Email: "john@doe.org",
+		When:  time.Now(),
+	})
+
+	setTag(r, "v1.0.1", &object.Signature{
+		Name:  "John Doe",
+		Email: "john@doe.org",
+		When:  time.Now(),
+	})
+	output = GetValues(tmpDir)
+	if output["Tag"] != "v1.0.1" {
+		t.Errorf("git first commit: GetValues()[Tag] = %v, want %v", output, "v1.0.1")
+	}
 }
 
 func doChange(t *testing.T, tmpDir string) {
@@ -108,4 +124,42 @@ func checkIfError(t *testing.T, err error) {
 	if err != nil {
 		t.FailNow()
 	}
+}
+
+func setTag(r *git.Repository, tag string, tagger *object.Signature) (bool, error) {
+	if tagExists(tag, r) {
+		return false, nil
+	}
+	h, err := r.Head()
+	if err != nil {
+		return false, err
+	}
+	_, err = r.CreateTag(tag, h.Hash(), &git.CreateTagOptions{
+		Tagger:  tagger,
+		Message: tag,
+	})
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func tagExists(tag string, r *git.Repository) bool {
+	tagFoundErr := "tag was found"
+	tags, err := r.TagObjects()
+	if err != nil {
+		return false
+	}
+	res := false
+	err = tags.ForEach(func(t *object.Tag) error {
+		if t.Name == tag {
+			res = true
+			return fmt.Errorf(tagFoundErr)
+		}
+		return nil
+	})
+	if err != nil && err.Error() != tagFoundErr {
+		return false
+	}
+	return res
 }
