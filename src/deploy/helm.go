@@ -31,9 +31,8 @@ func HelmRunScript(names []string, kind string, script *types.Script, target *ty
 			RepositoryConfig: "/tmp/.helmrepo",
 			Debug:            true,
 			Linting:          true, // Change this to false if you don't want linting.
-			DebugLog: func(format string, v ...interface{}) {
-			},
-			Output: &outputBuffer, // Not mandatory, leave open for default os.Stdout
+			DebugLog:         func(format string, v ...interface{}) {},
+			Output:           &outputBuffer, // Not mandatory, leave open for default os.Stdout
 		},
 		KubeContext: "",
 		KubeConfig:  target.Kubeconfig,
@@ -60,11 +59,11 @@ func HelmRunScript(names []string, kind string, script *types.Script, target *ty
 
 	// Add a chart-repository to the client.
 	if err := helmClient.AddOrUpdateChartRepo(chartRepo); err != nil {
-		panic(err)
+		log.Error().Err(err).Str("path", "helm").Msg("Add a chart-repository to the client error")
 	}
 	valuesFile, err := yaml.Marshal(&input)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Str("path", "helm").Msg("Pasing yaml error")
 	}
 	// put settings for chart and put values
 	chartSpec := helmclient.ChartSpec{
@@ -82,16 +81,16 @@ func HelmRunScript(names []string, kind string, script *types.Script, target *ty
 	// Note that helmclient.Options.Namespace should ideally match the namespace in chartSpec.Namespace.
 	_, err = helmClient.InstallOrUpgradeChart(nil, &chartSpec, nil)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Str("path", "helm").Msg("Install chart error")
 	}
 
 	poutput, err := helmClient.GetReleaseValues(kind, true)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Str("path", "helm").Msg("Get Release chart error")
 	}
 	template, err := helmClient.TemplateChart(&chartSpec, nil)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
 	}
 	services, ingresses := localyaml.GetBytes2(template)
 	hostList := searchHost(services, ingresses, target.Namespace)

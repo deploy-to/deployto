@@ -128,7 +128,7 @@ func GetBytes[T types.Service | types.Ingress](yamlb []byte) (result []*T) {
 	var yl map[string]interface{}
 	err := yaml.Unmarshal(yamlb, &yl)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Str("path", "yaml").Msg("Parse yaml error")
 	}
 	for {
 		var item any = new(T)
