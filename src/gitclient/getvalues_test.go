@@ -1,7 +1,6 @@
 package gitclient
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,25 +8,15 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-func TestGetValues(t *testing.T) {
-	//Create git repo
-	tmpDir, err := os.MkdirTemp("", "deployto-unittests*")
-	if err != nil {
-		t.FailNow()
-	}
-	t.Logf("tmp dir: %s" + tmpDir)
+func TestGetValues_GeneralChecks(t *testing.T) {
+	tmpDir, r, w := prepareGit(t)
 	defer func() {
 		os.RemoveAll(tmpDir)
 	}()
-
-	//git just init
-	r, err := git.PlainInit(tmpDir, false)
-	checkIfError(t, err)
-	w, err := r.Worktree()
-	checkIfError(t, err)
 
 	output := GetValues(tmpDir)
 	if len(output) != 2 {
@@ -48,29 +37,10 @@ func TestGetValues(t *testing.T) {
 
 	//git first commit
 	doChange(t, tmpDir)
-	_, err = w.Add("data.txt")
-	checkIfError(t, err)
-	commit, err := w.Commit("example go-git commit", &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  "John Doe",
-			Email: "john@doe.org",
-			When:  time.Now(),
-		},
-	})
-	checkIfError(t, err)
-	// TODO check output["Tag"]
-	_, err = setTag(r, "v1.0.0", &object.Signature{
-		Name:  "John Doe",
-		Email: "john@doe.org",
-		When:  time.Now(),
-	})
-	checkIfError(t, err)
-	_, err = setTag(r, "v1.0.1", &object.Signature{
-		Name:  "John Doe",
-		Email: "john@doe.org",
-		When:  time.Now(),
-	})
-	checkIfError(t, err)
+	commit := doCommit(t, w)
+	setTag(t, r, "v1.0.0")
+	setTag(t, r, "v1.0.1")
+
 	output = GetValues(tmpDir)
 	if len(output) != 3 {
 		t.Errorf("git first commit: the output does not contain 2 elements: %v", output)
@@ -87,18 +57,7 @@ func TestGetValues(t *testing.T) {
 
 	//dirty git
 	doChange(t, tmpDir)
-	_, err = setTag(r, "v1.0.0", &object.Signature{
-		Name:  "John Doe",
-		Email: "john@doe.org",
-		When:  time.Now(),
-	})
-	checkIfError(t, err)
-	_, err = setTag(r, "v1.0.1", &object.Signature{
-		Name:  "John Doe",
-		Email: "john@doe.org",
-		When:  time.Now(),
-	})
-	checkIfError(t, err)
+
 	output = GetValues(tmpDir)
 	if len(output) != 3 {
 		t.Errorf("dirty git: the output does not contain 3 elements: %v", output)
@@ -121,7 +80,57 @@ func TestGetValues(t *testing.T) {
 	if !strings.HasPrefix(output["Tag"].(string), "v1.0.1") {
 		t.Errorf("dirty git: prefix error: GetValues()[Tag] = %v, want %v", output, "v1.0.1")
 	}
+}
 
+func TestGetValues_GetCurrentTag(t *testing.T) {
+	tmpDir, r, w := prepareGit(t)
+	defer func() {
+		os.RemoveAll(tmpDir)
+	}()
+
+	//oldest commit
+	doChange(t, tmpDir)
+	doCommit(t, w)
+	setTag(t, r, "v6.6.6") // Previously, the project used a different versioning. But that was a long time ago and shouldn't affect current commits.
+
+	//corrent release
+	doChange(t, tmpDir)
+	commit := doCommit(t, w)
+	setTag(t, r, "v1.1.1")
+
+	// // Делаем потом, не в текущей итерации
+	// // TODO если у текущего коммита нет тега, а у родительского есть, то надо возвращать родительский, отмечая его +dirtyCommitXXXX
+	// // corrent release
+	// doChange(t, tmpDir)
+	// commit := doCommit(t, w)
+
+	//next release (maybe in another branch?)
+	doChange(t, tmpDir)
+	doCommit(t, w)
+	setTag(t, r, "v2.2.2-RC2")
+
+	// checkout to corrent release
+	w.Checkout(&git.CheckoutOptions{Hash: commit})
+
+	output := GetValues(tmpDir)
+	if !strings.HasPrefix(output["Tag"].(string), "v1.1.1") {
+		t.Errorf("dirty git: prefix error: GetValues() = %v, want Tag: v1.1.1", output)
+	}
+}
+
+func prepareGit(t *testing.T) (string, *git.Repository, *git.Worktree) {
+	//Create git repo
+	tmpDir, err := os.MkdirTemp("", "deployto-unittests*")
+	checkIfError(t, err)
+	t.Logf("tmp dir: %s" + tmpDir)
+
+	//git init
+	r, err := git.PlainInit(tmpDir, false)
+	checkIfError(t, err)
+	w, err := r.Worktree()
+	checkIfError(t, err)
+
+	return tmpDir, r, w
 }
 
 func doChange(t *testing.T, tmpDir string) {
@@ -136,46 +145,37 @@ func doChange(t *testing.T, tmpDir string) {
 	}
 }
 
+func doCommit(t *testing.T, w *git.Worktree) plumbing.Hash {
+	_, err := w.Add("data.txt")
+	checkIfError(t, err)
+	commit, err := w.Commit("example go-git commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "John Doe",
+			Email: "john@doe.org",
+			When:  time.Now(),
+		},
+	})
+	checkIfError(t, err)
+	return commit
+}
+
 func checkIfError(t *testing.T, err error) {
 	if err != nil {
 		t.FailNow()
 	}
 }
 
-func setTag(r *git.Repository, tag string, tagger *object.Signature) (bool, error) {
-	if tagExists(tag, r) {
-		return false, nil
-	}
+func setTag(t *testing.T, r *git.Repository, tag string) {
 	h, err := r.Head()
-	if err != nil {
-		return false, err
-	}
+	checkIfError(t, err)
+
 	_, err = r.CreateTag(tag, h.Hash(), &git.CreateTagOptions{
-		Tagger:  tagger,
+		Tagger: &object.Signature{
+			Name:  "John Doe",
+			Email: "john@doe.org",
+			When:  time.Now(),
+		},
 		Message: tag,
 	})
-	if err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-func tagExists(tag string, r *git.Repository) bool {
-	tagFoundErr := "tag was found"
-	tags, err := r.TagObjects()
-	if err != nil {
-		return false
-	}
-	res := false
-	err = tags.ForEach(func(t *object.Tag) error {
-		if t.Name == tag {
-			res = true
-			return fmt.Errorf(tagFoundErr)
-		}
-		return nil
-	})
-	if err != nil && err.Error() != tagFoundErr {
-		return false
-	}
-	return res
+	checkIfError(t, err)
 }
