@@ -68,12 +68,12 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 		log.Error().Err(err).Str("path", "helm").Msg("Pasing yaml error")
 	}
 	kind := types.Get(input, aliases[len(aliases)-1], "name")
+	version := types.Get(input, aliases[len(aliases)-1], "version")
 	// put settings for chart and put values
 	chartSpec := helmclient.ChartSpec{
-		ReleaseName: kind,
-		ChartName:   chartRepo.Name + "/" + kind,
-		//нужна версия чарта которую деплоим
-		//Version: "",
+		ReleaseName:     kind,
+		ChartName:       chartRepo.Name + "/" + kind,
+		Version:         version,
 		ValuesYaml:      string(valuesFile),
 		CreateNamespace: true,
 		Namespace:       target.Namespace,
