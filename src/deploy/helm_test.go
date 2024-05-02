@@ -1,5 +1,3 @@
-//go:build K8SIntegration
-
 // for call this test 1) setup k8s environment  2) run $go test --tags=K8SIntegration  ./... -run K8SIntegration
 package deploy
 
@@ -15,6 +13,7 @@ func TestK8SIntegrationHelm(t *testing.T) {
 	output, err := Helm(getTarget(t), "", []string{"AAAAA"}, types.Values(nil), types.Values{
 		"repository": "https://charts.bitnami.com/bitnami",
 		"name":       "postgresql",
+		"version":    "15.1.0",
 	})
 	if err != nil {
 		t.Fatalf("Helm error %v", err)

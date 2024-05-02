@@ -74,10 +74,11 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 		ChartName:   chartRepo.Name + "/" + kind,
 		//нужна версия чарта которую деплоим
 		//Version: "",
-		ValuesYaml:  string(valuesFile),
-		Namespace:   target.Namespace,
-		UpgradeCRDs: true,
-		Wait:        true,
+		ValuesYaml:      string(valuesFile),
+		CreateNamespace: true,
+		Namespace:       target.Namespace,
+		UpgradeCRDs:     true,
+		Wait:            true,
 	}
 
 	// Install a chart release.
@@ -101,9 +102,11 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
 	}
-	output["manifest"] = manifest
-	output["values"] = poutput
-	return
+	scriptOutput := make(types.Values)
+
+	scriptOutput["manifest"] = manifest
+	scriptOutput["values"] = poutput
+	return scriptOutput, nil
 }
 
 func searchHost(services []types.Service, ingresses []types.Ingress, namespace string) (host []map[string]interface{}) {
