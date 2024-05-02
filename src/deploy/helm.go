@@ -6,6 +6,7 @@ import (
 	"deployto/src/types"
 	"net/url"
 	"strings"
+	"time"
 
 	helmclient "github.com/poncheg/go-helm-client"
 	"github.com/rs/zerolog/log"
@@ -79,15 +80,18 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 		Namespace:       target.Namespace,
 		UpgradeCRDs:     true,
 		Wait:            true,
+		Timeout:         time.Duration(5 * float64(time.Minute)),
 	}
 
 	// Install a chart release.
 	// Note that helmclient.Options.Namespace should ideally match the namespace in chartSpec.Namespace.
-	_, err = helmClient.InstallOrUpgradeChart(context.TODO(), &chartSpec, nil)
+	release, err := helmClient.InstallOrUpgradeChart(context.TODO(), &chartSpec, nil)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Install chart error")
 	}
-
+	if release.Info.Status.String() != "deployed" {
+		log.Error().Err(err).Str("path", "helm").Msg("Release chart not deployed")
+	}
 	poutput, err := helmClient.GetReleaseValues(kind, true)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Get Release chart error")
