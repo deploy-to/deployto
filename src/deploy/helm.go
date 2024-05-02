@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"bytes"
+	"context"
 	"deployto/src/types"
 	localyaml "deployto/src/yaml"
 	"net/url"
@@ -14,12 +15,10 @@ import (
 )
 
 func init() {
-	RunScripts["helm"] = HelmRunScript
+	RunScriptFuncImplementations["helm"] = Helm
 }
 
-func HelmRunScript(names []string, kind string, script *types.Script, target *types.Target, input map[string]any) (output map[string]any, err error) {
-	// эта функци будет вызыватсья только для script.type = helm
-	// для script.type == helm, атрибут kind можно игнорировать
+func Helm(target *types.Target, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	var outputBuffer bytes.Buffer
 	// log.Error().Err(err).Str("path", path).Msg("Application/Components search error")
 	// log.Debug().Str("environment", environmentArg).Msg("start deployto")
@@ -45,7 +44,8 @@ func HelmRunScript(names []string, kind string, script *types.Script, target *ty
 		return nil, err
 	}
 	// get repository url
-	u, err := url.Parse(script.Repository)
+	repository := types.Get(input, "", "repository")
+	u, err := url.Parse(repository)
 	if err != nil {
 		log.Error().Err(err).Msg("Url parsing  error")
 		return nil, err
@@ -54,7 +54,7 @@ func HelmRunScript(names []string, kind string, script *types.Script, target *ty
 	ua := strings.Split(u.Path, "/")
 	chartRepo := repo.Entry{
 		Name: ua[0],
-		URL:  script.Repository,
+		URL:  repository,
 	}
 
 	// Add a chart-repository to the client.
@@ -65,6 +65,7 @@ func HelmRunScript(names []string, kind string, script *types.Script, target *ty
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Pasing yaml error")
 	}
+	kind := types.Get(input, aliases[len(aliases)-1], "repository")
 	// put settings for chart and put values
 	chartSpec := helmclient.ChartSpec{
 		ReleaseName: kind,
@@ -79,7 +80,7 @@ func HelmRunScript(names []string, kind string, script *types.Script, target *ty
 
 	// Install a chart release.
 	// Note that helmclient.Options.Namespace should ideally match the namespace in chartSpec.Namespace.
-	_, err = helmClient.InstallOrUpgradeChart(nil, &chartSpec, nil)
+	_, err = helmClient.InstallOrUpgradeChart(context.TODO(), &chartSpec, nil)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Install chart error")
 	}

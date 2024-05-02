@@ -1,23 +1,27 @@
 package types
 
-type Dependency struct {
-	Kind   string  `json:"kind,omitempty" yaml:"kind,omitempty"`
-	Name   string  `json:"name,omitempty" yaml:"name,omitempty"`
-	Root   bool    `json:"root,omitempty" yaml:"root,omitempty"`
-	Script *Script `json:",inline" yaml:",inline"`
+import (
+	"github.com/mitchellh/mapstructure"
+	"github.com/rs/zerolog/log"
+)
+
+type Dependency = Script
+type Script = struct {
+	Type   string
+	Root   bool
+	Values Values `mapstructure:",remain"` //Values хранятся на том же уровне, что и Type, Root
 }
 
-// TODO подумать, как будет выглядить Script для:
-// * Type == helm
-// * Type == terraform
-// * Type == component
-// * Type == do-not-deploy
-type Script struct {
-	Type       string  `json:"type,omitempty" yaml:"type,omitempty"`
-	Version    string  `json:"version,omitempty" yaml:"version,omitempty"`
-	Repository string  `json:"repository,omitempty" yaml:"repository,omitempty"`
-	Input      *Values `json:"input,omitempty" yaml:"input,omitempty"`
-	Output     *Values `json:"output,omitempty" yaml:"output,omitempty"`
+func DecodeScript(values any) (script *Script) {
+	if values == nil {
+		log.Info().Msg("DecodeScript - input values is nil")
+		return &Script{}
+	}
+	script = &Script{}
+	err := mapstructure.Decode(values, script)
+	if err != nil {
+		log.Error().Err(err).Msg("DecodeScript error")
+		return nil
+	}
+	return script
 }
-
-type Values = map[string]interface{}

@@ -1,6 +1,7 @@
 package yaml
 
 import (
+	"deployto/src/helper"
 	"deployto/src/types"
 	"errors"
 	"fmt"
@@ -13,50 +14,28 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const DeploytoPath = ".deployto" //TODO bug this const defined more then in one place
-
-func GetDeploytoPath(path string) string {
-	return filepath.Join(path, DeploytoPath)
-}
-
-func DeploytoPathExists(path string) bool {
-	deploytoPath := GetDeploytoPath(path)
-	_, err := os.Stat(deploytoPath)
-	if err == nil {
-		return true
-	}
-	if !os.IsNotExist(err) {
-		log.Info().Err(err).Str("path", deploytoPath).Msg("app path search error")
-	}
-	return false
-}
-
 // Ищу компоненты.
 // Начиная с указанной, проверяю все родительские папки на наличие в ней папки .deployto, когда найдена, то это и есть папка компоненты
 // Возвращаю все kind: Component из папки компоненты
 func GetComponent(path string) (comps []*types.Component, err error) {
-	currentPath := path
-	for {
-		if currentPath == "/" || len(currentPath) < 4 /*TODO need test on windows*/ {
-			log.Error().Str("startPath", path).Str("currentPath", currentPath).Msg("getDeployToPaths end - too short path")
-			return nil, errors.New("COMPONENT FOLDER NOT FOUND")
-		}
-
-		log.Debug().Str("path", currentPath).Msg("check dir")
-
-		if DeploytoPathExists(currentPath) {
-			comps = Get[types.Component](GetDeploytoPath(currentPath))
-			if len(comps) == 0 {
-				log.Error().Str("startPath", path).Str("currentPath", currentPath).Msg("getDeployToPaths end - too short path")
-				return nil, errors.New("COMPONENT NOT FOUND IN COMPONENT FOLDER")
-			}
-			return comps, nil
-		}
-		currentPath = filepath.Dir(currentPath)
+	rootPath, err := helper.GetProjectRoot(path, helper.DeploytoPath)
+	if err != nil {
+		log.Error().Str("startPath", path).Msg("Project dir not found")
+		return nil, err
 	}
+
+	comps = Get[types.Component](rootPath)
+	if len(comps) == 0 {
+		log.Error().Str("startPath", path).Str("currentPath", rootPath).Msg("Component not found")
+		return nil, errors.New("COMPONENT NOT FOUND IN COMPONENT FOLDER")
+	}
+	return comps, nil
 }
 
 func Get[T types.Component | types.Environment | types.Target | types.Job](deploytoPath string) (result []*T) {
+	if !helper.IsDeploytoPath(deploytoPath) {
+		deploytoPath = helper.GetDeploytoPath(deploytoPath)
+	}
 	err := filepath.Walk(deploytoPath,
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -130,20 +109,19 @@ func GetBytes[T types.Service | types.Ingress](yamlb []byte) (result []*T) {
 	if err != nil {
 		log.Error().Err(err).Str("path", "yaml").Msg("Parse yaml error")
 	}
-	for {
-		var item any = new(T)
-		switch itemTyped := item.(type) {
-		case *types.Ingress:
-			if itemTyped.Kind == "Ingress" {
-				result = append(result, item.(*T))
-			}
-		case *types.Service:
-			if itemTyped.Kind == "Service" {
-				result = append(result, item.(*T))
-			}
-		default:
-			log.Error().Type("type", item).Msg("yaml crd type not supported")
+
+	var item any = new(T)
+	switch itemTyped := item.(type) {
+	case *types.Ingress:
+		if itemTyped.Kind == "Ingress" {
+			result = append(result, item.(*T))
 		}
+	case *types.Service:
+		if itemTyped.Kind == "Service" {
+			result = append(result, item.(*T))
+		}
+	default:
+		log.Error().Type("type", item).Msg("yaml crd type not supported")
 	}
 	return
 }

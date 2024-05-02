@@ -2,13 +2,12 @@ package cmd
 
 import (
 	"deployto/src/deploy"
+	"deployto/src/helper"
 	"deployto/src/types"
 	"deployto/src/yaml"
 	"errors"
-	"fmt"
 	"os"
 	"slices"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -26,14 +25,15 @@ func Deployto(cCtx *cli.Context) error {
 		log.Error().Err(err).Msg("Get workdir error")
 		return err
 	}
-	// COMPONENTS
-	comps, err := yaml.GetComponent(path)
+
+	path, err = helper.GetProjectRoot(path, helper.DeploytoPath)
 	if err != nil {
-		log.Error().Err(err).Str("path", path).Msg("Application/Components search error")
+		log.Error().Err(err).Msg("Get DeploytoPath error")
 		return err
 	}
+
 	// Envirement
-	environments := yaml.Get[types.Environment](comps[0].StatusGetPath())
+	environments := yaml.Get[types.Environment](path)
 	var environment *types.Environment
 	for _, e := range environments {
 		if e.Base.Meta.Name == environmentArg {
@@ -41,13 +41,13 @@ func Deployto(cCtx *cli.Context) error {
 		}
 	}
 	if environment == nil {
-		log.Error().Int("len(environments)", len(environments)).Str("path", comps[0].StatusGetPath()).Str("waitEnvironment", environmentArg).Msg("environment ")
-		return errors.New("APP NOT FOUND")
+		log.Error().Int("len(environments)", len(environments)).Str("path", path).Str("waitEnvironment", environmentArg).Msg("environment not found")
+		return errors.New("ENVIRONMENT NOT FOUND")
 	}
 	log.Debug().Str("name", environment.Base.Meta.Name).Msg("Environment found")
 	// Targets
 	var targets []*types.Target
-	for _, t := range yaml.Get[types.Target](comps[0].StatusGetPath()) {
+	for _, t := range yaml.Get[types.Target](path) {
 		if slices.Contains(environment.Spec.Targets, t.Base.Meta.Name) {
 			targets = append(targets, t)
 		}
@@ -58,111 +58,23 @@ func Deployto(cCtx *cli.Context) error {
 	}
 	log.Debug().Int("len(targets)", len(targets)).Msg("Targets found")
 
-	fmt.Printf("-- Call for components --------------------------------------\n")
-	for _, c := range comps {
-		fmt.Printf("  Path: %v\n", c.StatusGetPath())
-		fmt.Printf("  File: %v\n", c.Base.Status.FileName)
-		fmt.Printf("  Name: %v\n", c.Base.Meta.Name)
-	}
-	fmt.Printf("-- Environment ----------------------------------------------\n")
-	fmt.Printf("  File:   %v\n", environment.Base.Status.FileName)
-	fmt.Printf("  Name:  %v\n", environment.Base.Meta.Name)
-	fmt.Printf("-- Targets --------------------------------------------------\n")
+	log.Info().Str("file", environment.Base.Status.FileName).Str("name", environment.Base.Meta.Name).Msg("Deploy environment")
 	for _, t := range targets {
-		fmt.Printf("  File: %v\n", t.Base.Status.FileName)
-		fmt.Printf("  Name: %v\n", t.Base.Meta.Name)
-	}
+		log.Info().Str("file", t.Base.Status.FileName).Str("name", t.Base.Meta.Name).Msg("Deploy target")
 
-	for _, c := range comps {
-		//деплою все найденные компоненты
-		values := make(map[string]any)
-		values["git"] = GetGitValues(c.StatusGetPath())
-		//values["image"] := CI()
-
-		e := Deploy("TODO, for each target", []string{c.Base.Meta.Name}, c.Spec, values)
+		rootValues := make(types.Values)
+		//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
+		_, e := deploy.Component(t,
+			path,
+			nil,
+			rootValues, types.Values(nil))
 		if e != nil {
 			log.Error().Err(e).Msg("Component deploy error")
 			err = errors.Join(err, e)
 		}
+
+		//TODO Run target script (move this logic to src/deploy/)
 	}
+	//TODO Run Env script (move this logic to src/deploy/?   Or stop move on target?)
 	return err
-}
-
-func GetGitValues(path string) map[string]any {
-	//TODO
-	return nil
-}
-
-func Deploy(kubeconfig string, aliases []string, as *types.ComponentSpec, values map[string]interface{}) (resultError error) {
-	l := log.With().Strs("aliases", aliases).Logger()
-	//TODO values из
-	l.Debug().Msg("TODO  BUILD && Push") // output где взять образ
-	//TODO положить репозиторий/образ/тег в values
-
-	//TODO положить в values всё из as.Script.Input
-	l.Debug().Msg("TODO Preparing the values")
-
-	//TODO values из
-
-	//Run dependency
-	for _, d := range as.Dependencies {
-		var dependencyAliases []string
-		if !d.Root {
-			dependencyAliases = aliases
-		}
-		if d.Name == "" {
-			dependencyAliases = append(dependencyAliases, d.Kind)
-		} else {
-			dependencyAliases = append(dependencyAliases, d.Name)
-		}
-
-		if _, ok := values[buildAlias(aliases)]; ok {
-			l.Debug().Strs("alias", dependencyAliases).Msg("Deployed earlier")
-			continue
-		}
-
-		l.Debug().Strs("alias", dependencyAliases).Msg("TODO Run dependency")
-		o, e := RunScript(dependencyAliases, d.Kind, d.Script, values)
-		if e != nil {
-			l.Error().Err(e).Msg("RunScript error")
-			resultError = errors.Join(resultError, e)
-		}
-		values[buildAlias(dependencyAliases)] = o
-	}
-	// Run script
-	o, e := RunScript(aliases, "component", as.Script, values)
-	if e != nil {
-		l.Error().Err(e).Msg("RunScript error")
-		resultError = errors.Join(resultError, e)
-	}
-	values[buildAlias(aliases)] = o
-
-	return resultError
-}
-
-func buildAlias(names []string) string {
-	return strings.Join(names, "-")
-}
-
-func RunScript(names []string, kind string, script *types.Script, input map[string]any) (output map[string]any, err error) {
-	l := log.With().Strs("names", names).Logger()
-	if script == nil {
-		l.Debug().Msg("Script not defined")
-		return nil, nil
-	}
-	// TODO на момент вызова RunSript нуже таргет??
-	t := types.Target{
-		Namespace:  "test",
-		Kubeconfig: []byte{},
-	}
-	l.Debug().Str("scriptType", script.Type).Msg("Run script")
-	if runScript, ok := deploy.RunScripts[script.Type]; ok {
-		return runScript(names, kind, script, &t, input)
-	}
-	if runScript, ok := deploy.RunScripts["component"]; ok {
-		return runScript(names, kind, script, &t, input)
-	}
-
-	l.Error().Msg("RunScripts function not found")
-	return nil, errors.New("RUNSCRIPT FUNCTION NOT FOUND")
 }

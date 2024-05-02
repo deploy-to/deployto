@@ -3,12 +3,7 @@ kind: Component
 metadata:
   name: FullApplication
 spec:
-  dependencies:
-  - kind: component
-    name: service-a
+  script:
+    type: component
     root: true
-    repository: file://../service-a
-# service b is loaded depending on service a 
-
-
-
+    path: ../service-a

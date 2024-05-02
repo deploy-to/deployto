@@ -4,12 +4,22 @@ metadata:
   name: serviceA
 spec:
   dependencies:
-  - kind: component
-    name: service-b
-    repository: https://rep-service-b/service-b.git
-  - kind: postgresql
-  - kind: postgresql
-    name: shared-db-between-services
-    root: true
-  - kind: s3
-    name: serviceA-for-s3
+    build:
+      type: job    # если values.name  не установлен, то использовать alias
+    service-b:
+      type: component
+#      repository: https://rep-service-b/service-b.git
+      path: ../../service-b
+    postgresql:
+    shared-db-between-services:
+      root: true
+      name: postgresql
+    s3:
+      name: s3/ha
+  script:
+    type: helm
+    repository: file://../helm
+    build:
+      image: "__deployto-lookup: build.image"
+    shared-db: "__deployto-lookup: shared-db-between-services.ConnectionString"
+    s3: "__deployto-lookup: s3.ConnectionString"

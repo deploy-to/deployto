@@ -3,6 +3,7 @@ kind: Environment
 metadata:
   name: local
 spec:
+  defaulTemplate: prod
   targets:
     - local-target
 ---
@@ -11,5 +12,6 @@ kind: Target
 metadata:
   name: local-target
 spec:
-  script:
+  defaulTemplate: prod
+  values:
     type: Helm

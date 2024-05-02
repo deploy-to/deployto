@@ -1,9 +1,6 @@
 apiVersion: deployto.dev/v1beta1
-kind: Application
+kind: Component
 metadata:
-  name: ExampleApp
-spec:
-  dependencies:
-  - name: serviceA
-    repository: file://./serviceA
+  name: ExampleComponent
+
   

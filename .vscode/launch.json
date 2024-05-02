@@ -7,8 +7,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": ["job","run"],
-            "cwd": "${workspaceFolder}/examples/two-services+two-postgresql+s3/servicea"
+            "args": ["--ll=trace"],
+            "cwd": "${workspaceFolder}/examples/test-yaml"
         }
     ]
 }

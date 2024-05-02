@@ -1,0 +1,19 @@
+apiVersion: deployto.dev/v1beta1
+kind: Environment
+metadata:
+  name: dev
+spec:
+  defaulTemplate: dev
+  targets:
+    - dev-target
+---
+apiVersion: deployto.dev/v1beta1
+kind: Target
+metadata:
+  name: dev-target
+spec:
+  defaulTemplate: dev
+  script:
+    type: Helm
+    Version: 0.0.0
+    Repository: oci://registry-1.docker.io/bitnamicharts/postgresql
