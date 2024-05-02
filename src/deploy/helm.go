@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"deployto/src/types"
-	localyaml "deployto/src/yaml"
 	"net/url"
 	"strings"
 
@@ -97,11 +96,14 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
 	}
-	services, ingresses := localyaml.GetBytes2(template)
-	hostList := searchHost(services, ingresses, target.Namespace)
-
-	poutput["host"] = hostList
-	return poutput, nil
+	var manifest map[string]any
+	err = yaml.Unmarshal(template, &manifest)
+	if err != nil {
+		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
+	}
+	output["manifest"] = manifest
+	output["values"] = poutput
+	return
 }
 
 func searchHost(services []types.Service, ingresses []types.Ingress, namespace string) (host []map[string]interface{}) {
