@@ -122,27 +122,3 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	scriptOutput["values"] = poutput
 	return scriptOutput, nil
 }
-
-func searchHost(services []types.Service, ingresses []types.Ingress, namespace string) (host []map[string]interface{}) {
-	svc := make(map[string]interface{})
-	svcList := []string{}
-	for _, s := range services {
-		for _, p := range s.Spec.Ports {
-			svcList = append(svcList, s.Metadata.Name+namespace+"svc.cluster.local"+":"+string(p.Port))
-		}
-
-	}
-	svc["service"] = svcList
-
-	ing := make(map[string]interface{})
-	ingList := []string{}
-	for _, s := range ingresses {
-		for _, p := range s.Spec.Rules {
-			ingList = append(ingList, p.Host)
-		}
-
-	}
-	ing["ingress"] = ingList
-	host = append(host, svc, ing)
-	return
-}

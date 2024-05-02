@@ -45,9 +45,3 @@ func getTarget(t *testing.T) *types.Target {
 		Kubeconfig: kubeconfig,
 	}
 }
-
-func checkIfError(t *testing.T, err error) {
-	if err != nil {
-		t.FailNow()
-	}
-}
