@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"deployto/src/types"
+	"encoding/json"
 	"net/url"
 	"strings"
 	"time"
@@ -106,8 +107,17 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
 	}
+	var releaseamp map[string]any
+	releasein, err := json.Marshal(release)
+	if err != nil {
+		log.Error().Err(err).Str("path", "helm").Msg("Marshal release error")
+	}
+	err = yaml.Unmarshal(releasein, &releaseamp)
+	if err != nil {
+		log.Error().Err(err).Str("path", "helm").Msg("Unmarshal release error")
+	}
 	scriptOutput := make(types.Values)
-
+	scriptOutput["release"] = releaseamp
 	scriptOutput["manifest"] = manifest
 	scriptOutput["values"] = poutput
 	return scriptOutput, nil

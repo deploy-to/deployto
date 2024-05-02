@@ -18,6 +18,9 @@ func TestK8SIntegrationHelm(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Helm error %v", err)
 	}
+	// if output["CommitShort"] != commit.String()[:7] {
+	// 	t.Errorf("git first commit: GetValues()[Commit] = %v, want %v", output, commit.String()[:7])
+	// }
 	t.Logf("Output: %v", output)
 }
 
