@@ -88,6 +88,7 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	poutput, err := helmClient.GetReleaseValues(kind, true)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Get Release chart error")
+		return nil, err
 	}
 	template, err := helmClient.TemplateChart(&chartSpec, nil)
 	if err != nil {
