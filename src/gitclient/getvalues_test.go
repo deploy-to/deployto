@@ -110,7 +110,8 @@ func TestGetValues_GetCurrentTag(t *testing.T) {
 	setTag(t, r, "v2.2.2-RC2")
 
 	// checkout to corrent release
-	w.Checkout(&git.CheckoutOptions{Hash: commit})
+	err := w.Checkout(&git.CheckoutOptions{Hash: commit})
+	checkIfError(t, err)
 
 	output := GetValues(tmpDir)
 	if !strings.HasPrefix(output["Tag"].(string), "v1.1.1") {
@@ -122,7 +123,7 @@ func prepareGit(t *testing.T) (string, *git.Repository, *git.Worktree) {
 	//Create git repo
 	tmpDir, err := os.MkdirTemp("", "deployto-unittests*")
 	checkIfError(t, err)
-	t.Logf("tmp dir: %s" + tmpDir)
+	t.Logf("tmp dir: %s", tmpDir)
 
 	//git init
 	r, err := git.PlainInit(tmpDir, false)
