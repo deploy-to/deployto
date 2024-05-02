@@ -20,8 +20,6 @@ func init() {
 
 func Helm(target *types.Target, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	var outputBuffer bytes.Buffer
-	// log.Error().Err(err).Str("path", path).Msg("Application/Components search error")
-	// log.Debug().Str("environment", environmentArg).Msg("start deployto")
 	//set settings for helm
 	opt := &helmclient.KubeConfClientOptions{
 		Options: &helmclient.Options{
@@ -30,8 +28,10 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 			RepositoryConfig: "/tmp/.helmrepo",
 			Debug:            true,
 			Linting:          true, // Change this to false if you don't want linting.
-			DebugLog:         func(format string, v ...interface{}) {},
-			Output:           &outputBuffer, // Not mandatory, leave open for default os.Stdout
+			DebugLog: func(format string, v ...interface{}) {
+				log.Debug().Str("ctx", "helm").Msgf(format, v...)
+			},
+			Output: &outputBuffer, // Not mandatory, leave open for default os.Stdout
 		},
 		KubeContext: "",
 		KubeConfig:  target.Kubeconfig,
@@ -45,6 +45,9 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	}
 	// get repository url
 	repository := types.Get(input, "", "repository")
+	if repository[len(repository)-1] != '/' {
+		repository += "/"
+	}
 	u, err := url.Parse(repository)
 	if err != nil {
 		log.Error().Err(err).Msg("Url parsing  error")
@@ -53,7 +56,7 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	// get name for repository from url path
 	ua := strings.Split(u.Path, "/")
 	chartRepo := repo.Entry{
-		Name: ua[0],
+		Name: ua[1],
 		URL:  repository,
 	}
 
@@ -65,11 +68,11 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Pasing yaml error")
 	}
-	kind := types.Get(input, aliases[len(aliases)-1], "repository")
+	kind := types.Get(input, aliases[len(aliases)-1], "name")
 	// put settings for chart and put values
 	chartSpec := helmclient.ChartSpec{
 		ReleaseName: kind,
-		ChartName:   chartRepo.Name + kind,
+		ChartName:   chartRepo.Name + "/" + kind,
 		//нужна версия чарта которую деплоим
 		//Version: "",
 		ValuesYaml:  string(valuesFile),

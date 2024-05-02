@@ -13,7 +13,7 @@ import (
 
 func TestK8SIntegrationHelm(t *testing.T) {
 	output, err := Helm(getTarget(t), "", []string{"AAAAA"}, types.Values(nil), types.Values{
-		"repository": "oci://registry-1.docker.io/bitnamicharts",
+		"repository": "https://charts.bitnami.com/bitnami",
 		"name":       "postgresql",
 	})
 	if err != nil {
