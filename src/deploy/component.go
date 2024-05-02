@@ -13,7 +13,7 @@ import (
 func init() {
 	RunScriptFuncImplementations["component"] = Component
 }
-func Component(kubeconfig string, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Component(target *types.Target, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	output = make(types.Values)
 	repository := types.Get(input, "", "repository")
 	path := types.Get(input, "", "path")
@@ -64,7 +64,7 @@ func Component(kubeconfig string, workdir string, aliases []string, rootValues, 
 				dependencyAliases = append(aliases, alias)
 			}
 
-			dependencyOutput, e := RunScript(kubeconfig, workdir,
+			dependencyOutput, e := RunScript(target, workdir,
 				dependencyAliases,
 				rootValues,
 				d, input)
@@ -78,7 +78,7 @@ func Component(kubeconfig string, workdir string, aliases []string, rootValues, 
 		}
 
 		scriptContext := types.MergeValues(dependenciesOutput, input)
-		scriptOutput, e := RunScript(kubeconfig, workdir,
+		scriptOutput, e := RunScript(target, workdir,
 			aliases,
 			rootValues,
 			compScript, scriptContext)

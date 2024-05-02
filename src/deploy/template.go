@@ -11,7 +11,7 @@ func init() {
 	RunScriptFuncImplementations["template"] = Template
 	RunScriptFuncImplementations[""] = Template //default script type
 }
-func Template(kubeconfig string, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Template(target *types.Target, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	output = types.Values{
 		"ConnectionString": "http://" + strings.Join(aliases, "."),
 	}

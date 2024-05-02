@@ -11,7 +11,7 @@ func init() {
 	RunScriptFuncImplementations["job"] = Job
 }
 
-func Job(kubeconfig string, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Job(target *types.Target, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	uuid := shortuuid.New()
 	output = types.Values{
 		"image":      aliases[len(aliases)-1],

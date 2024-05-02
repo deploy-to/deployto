@@ -6,7 +6,6 @@ import (
 	"deployto/src/types"
 	"deployto/src/yaml"
 	"errors"
-	"fmt"
 	"os"
 	"slices"
 
@@ -59,24 +58,23 @@ func Deployto(cCtx *cli.Context) error {
 	}
 	log.Debug().Int("len(targets)", len(targets)).Msg("Targets found")
 
-	fmt.Printf("-- Environment ----------------------------------------------\n")
-	fmt.Printf("  File:   %v\n", environment.Base.Status.FileName)
-	fmt.Printf("  Name:  %v\n", environment.Base.Meta.Name)
-	fmt.Printf("-- Targets --------------------------------------------------\n")
+	log.Info().Str("file", environment.Base.Status.FileName).Str("name", environment.Base.Meta.Name).Msg("Deploy environment")
 	for _, t := range targets {
-		fmt.Printf("  File: %v\n", t.Base.Status.FileName)
-		fmt.Printf("  Name: %v\n", t.Base.Meta.Name)
-	}
+		log.Info().Str("file", t.Base.Status.FileName).Str("name", t.Base.Meta.Name).Msg("Deploy target")
 
-	rootValues := make(types.Values)
-	//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
-	_, e := deploy.Component("TODO, for each target",
-		path,
-		nil,
-		rootValues, types.Values(nil))
-	if e != nil {
-		log.Error().Err(e).Msg("Component deploy error")
-		err = errors.Join(err, e)
+		rootValues := make(types.Values)
+		//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
+		_, e := deploy.Component(t,
+			path,
+			nil,
+			rootValues, types.Values(nil))
+		if e != nil {
+			log.Error().Err(e).Msg("Component deploy error")
+			err = errors.Join(err, e)
+		}
+
+		//TODO Run target script (move this logic to src/deploy/)
 	}
+	//TODO Run Env script (move this logic to src/deploy/?   Or stop move on target?)
 	return err
 }
