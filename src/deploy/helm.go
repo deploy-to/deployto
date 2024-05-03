@@ -64,10 +64,12 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	// Add a chart-repository to the client.
 	if err := helmClient.AddOrUpdateChartRepo(chartRepo); err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Add a chart-repository to the client error")
+		return nil, err
 	}
 	valuesFile, err := yaml.Marshal(&input)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Pasing yaml error")
+		return nil, err
 	}
 	kind := types.Get(input, aliases[len(aliases)-1], "name")
 	version := types.Get(input, aliases[len(aliases)-1], "version")
@@ -89,9 +91,11 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	release, err := helmClient.InstallOrUpgradeChart(context.TODO(), &chartSpec, nil)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Install chart error")
+		return nil, err
 	}
 	if release.Info.Status.String() != "deployed" {
 		log.Error().Err(err).Str("path", "helm").Msg("Release chart not deployed")
+		return nil, err
 	}
 	poutput, err := helmClient.GetReleaseValues(kind, true)
 	if err != nil {
@@ -101,20 +105,24 @@ func Helm(target *types.Target, workdir string, aliases []string, rootValues, in
 	template, err := helmClient.TemplateChart(&chartSpec, nil)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
+		return nil, err
 	}
 	var manifest map[string]any
 	err = yaml.Unmarshal(template, &manifest)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
+		return nil, err
 	}
 	var releaseamp map[string]any
 	releasein, err := json.Marshal(release)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Marshal release error")
+		return nil, err
 	}
 	err = yaml.Unmarshal(releasein, &releaseamp)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Unmarshal release error")
+		return nil, err
 	}
 	scriptOutput := make(types.Values)
 	scriptOutput["release"] = releaseamp
