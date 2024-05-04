@@ -110,12 +110,13 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			},
 		},
 	}
-	output, err = Helm(getTarget(t), "", []string{"AAAAA"}, types.Values(nil), inputs)
+	_, err = Helm(getTarget(t), "", []string{"AAAAA"}, types.Values(nil), inputs)
 	if err != nil {
 		t.Fatalf("Helm error %v", err)
 	}
-	if !strings.HasPrefix(err.Error(), "no chart version found for postgresql-ha-99.99.99") {
-		t.Errorf("Need chart error = %v, want %v", err.Error(), "no chart version found for postgresql-ha-99.99.99")
+	errorText := "no chart version found for postgresql-ha-99.99.99"
+	if !strings.HasPrefix(err.Error(), errorText) {
+		t.Errorf("Need chart error = %v, want %v", err.Error(), errorText)
 	}
 }
 
