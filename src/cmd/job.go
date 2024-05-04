@@ -3,7 +3,7 @@ package cmd
 import (
 	"bytes"
 	"context"
-	"deployto/src"
+	"deployto/src/filesystem"
 	"deployto/src/types"
 	"deployto/src/yaml"
 	"errors"
@@ -82,10 +82,10 @@ func callJob(cCtx *cli.Context, workdirpath string, input map[string]any) (outpu
 		}
 	}
 
-	filesystem := src.GetFilesystem("file://" + path)
+	fs := filesystem.GetFilesystem("file://" + path)
 
 	// Application
-	apps := yaml.Get[types.Job](filesystem, "/")
+	apps := yaml.Get[types.Job](fs, "/")
 	if len(apps) != 1 {
 		log.Error().Int("len(app)", len(apps)).Str("path", path).Msg("wait one app")
 		return nil, errors.New("APP NOT FOUND")

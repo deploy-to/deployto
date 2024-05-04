@@ -1,7 +1,7 @@
 package yaml
 
 import (
-	"deployto/src"
+	"deployto/src/filesystem"
 	"deployto/src/types"
 	"strings"
 
@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Get[T types.Component | types.Environment | types.Target | types.Job](filesystem *src.Filesystem, deploytoDir string) (result []*T) {
+func Get[T types.Component | types.Environment | types.Target | types.Job](filesystem *filesystem.Filesystem, deploytoDir string) (result []*T) {
 	files, err := filesystem.FS.ReadDir("/")
 	if err != nil {
 		log.Error().Err(err).Msg("ReadDir error")
@@ -22,7 +22,7 @@ func Get[T types.Component | types.Environment | types.Target | types.Job](files
 	return
 }
 
-func GetFromFile[T types.Component | types.Environment | types.Target | types.Job](filesystem *src.Filesystem, fileName string) (result []*T) {
+func GetFromFile[T types.Component | types.Environment | types.Target | types.Job](filesystem *filesystem.Filesystem, fileName string) (result []*T) {
 	file, err := filesystem.FS.Open(fileName)
 	if err != nil {
 		log.Error().Str("file", fileName).Err(err).Msg("Open file error")

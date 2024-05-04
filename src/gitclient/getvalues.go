@@ -1,22 +1,22 @@
 package gitclient
 
 import (
-	"deployto/src"
+	"deployto/src/filesystem"
 	"deployto/src/types"
 	"sort"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/cache"
-	"github.com/go-git/go-git/v5/storage/filesystem"
+	gogitfilesystem "github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/lithammer/shortuuid/v3"
 	"github.com/rs/zerolog/log"
 )
 
-func GetValues(fs *src.Filesystem, path string) (values types.Values) {
+func GetValues(fs *filesystem.Filesystem, path string) (values types.Values) {
 	values = make(types.Values)
 
-	gitRoot := src.GetGitRootFilesystem(fs, path)
+	gitRoot := filesystem.GetGitRootFilesystem(fs, path)
 	if gitRoot == nil {
 		log.Error().Msg("git not found")
 		return
@@ -32,7 +32,7 @@ func GetValues(fs *src.Filesystem, path string) (values types.Values) {
 		log.Error().Err(err).Msg("git storer not fount")
 		return
 	}
-	rep, err := git.Open(filesystem.NewStorage(storer, cache.NewObjectLRUDefault()), gitRoot.FS)
+	rep, err := git.Open(gogitfilesystem.NewStorage(storer, cache.NewObjectLRUDefault()), gitRoot.FS)
 	if err != nil {
 		log.Error().Err(err).Msg("Error opening git repository")
 		return

@@ -1,4 +1,4 @@
-package src
+package filesystem
 
 import (
 	"os"

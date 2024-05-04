@@ -1,7 +1,7 @@
 package gitclient
 
 import (
-	"deployto/src"
+	"deployto/src/filesystem"
 	"os"
 	"path/filepath"
 	"strings"
@@ -121,13 +121,13 @@ func TestGetValues_GetCurrentTag(t *testing.T) {
 	}
 }
 
-func prepareGit(t *testing.T) (string, *src.Filesystem, *git.Repository, *git.Worktree) {
+func prepareGit(t *testing.T) (string, *filesystem.Filesystem, *git.Repository, *git.Worktree) {
 	//Create git repo
 	tmpDir, err := os.MkdirTemp("", "deployto-testgetvalues*")
 	checkIfError(t, err)
 	t.Logf("tmp dir: %s", tmpDir)
 
-	fs := src.GetFilesystem("file://" + tmpDir)
+	fs := filesystem.GetFilesystem("file://" + tmpDir)
 
 	//git init
 	r, err := git.PlainInit(tmpDir, false)

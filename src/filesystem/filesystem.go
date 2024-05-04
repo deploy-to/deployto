@@ -1,4 +1,4 @@
-package src
+package filesystem
 
 import (
 	"os"
@@ -55,27 +55,47 @@ func GetGitRootFilesystem(fs *Filesystem, path string) *Filesystem {
 		return fs
 	}
 	if fs.Type == LOCAL {
-		currentPath, wasCut := strings.CutPrefix(fs.BaseDir, "file://")
-		if !wasCut {
-			log.Error().Str("baseDir", fs.BaseDir).Msg("wait file:// prefix")
-			return nil
-		}
-		currentPath = filepath.Clean(filepath.Join(currentPath, path))
-		for {
-			if IsDirExists(filepath.Join(currentPath, git.GitDirName)) {
-				log.Debug().Str("searchDir", git.GitDirName).Str("path", currentPath).Msg("searchDir found")
-				return GetFilesystem("file://" + currentPath)
-			}
-			log.Debug().Str("searchDir", git.GitDirName).Str("path", currentPath).Msg("searchDir not found - go to parent")
-
-			if strings.HasSuffix(currentPath, string(os.PathSeparator)) {
-				return nil // root dir
-			}
-			currentPath = filepath.Dir(currentPath)
-		}
+		return searchLocalRoot(fs, path, git.GitDirName)
 	}
 	return nil
 }
+
+func GetDeploytoRootFilesystem(fs *Filesystem, path string) *Filesystem {
+	if fs == nil {
+		return nil
+	}
+	if fs.Type == GIT {
+		log.Error().Msg("GetDeploytoRootFilesystem for git not implimented")
+		return nil
+	}
+	if fs.Type == LOCAL {
+		return searchLocalRoot(fs, path, DeploytoDirName)
+	}
+	return nil
+}
+
+func searchLocalRoot(fs *Filesystem, path string, dirName string) *Filesystem {
+	currentPath, wasCut := strings.CutPrefix(fs.BaseDir, "file://")
+	if !wasCut {
+		log.Error().Str("baseDir", fs.BaseDir).Msg("wait file:// prefix")
+		return nil
+	}
+	currentPath = filepath.Clean(filepath.Join(currentPath, path))
+	for {
+		if IsDirExists(filepath.Join(currentPath, dirName)) {
+			log.Debug().Str("searchDir", dirName).Str("path", currentPath).Msg("searchDir found")
+			return GetFilesystem("file://" + currentPath)
+		}
+		log.Debug().Str("searchDir", dirName).Str("path", currentPath).Msg("searchDir not found - go to parent")
+
+		if strings.HasSuffix(currentPath, string(os.PathSeparator)) {
+			return nil // root dir
+		}
+		currentPath = filepath.Dir(currentPath)
+	}
+}
+
+const DeploytoDirName = ".deployto"
 
 func IsDirExists(localPath string) bool {
 	fi, err := os.Stat(localPath)

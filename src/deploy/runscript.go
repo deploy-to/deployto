@@ -1,17 +1,18 @@
 package deploy
 
 import (
+	"deployto/src/filesystem"
 	"deployto/src/types"
 	"errors"
 
 	"github.com/rs/zerolog/log"
 )
 
-type RunScriptFuncImplementationType = func(target *types.Target, workdir string, aliases []string, rootValues, values types.Values) (output map[string]any, err error)
+type RunScriptFuncImplementationType = func(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues, values types.Values) (output map[string]any, err error)
 
 var RunScriptFuncImplementations = map[string]RunScriptFuncImplementationType{}
 
-func RunScript(target *types.Target, workdir string, aliases []string, rootOutput types.Values, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
+func RunScript(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootOutput types.Values, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
 	l := log.With().Strs("aliases", aliases).Logger()
 
 	if theDependencyWasDeployedEarlier, ok := rootOutput[buildAlias(aliases)]; ok {
@@ -32,7 +33,7 @@ func RunScript(target *types.Target, workdir string, aliases []string, rootOutpu
 	}
 
 	if RunScriptFuncImplementation, ok := RunScriptFuncImplementations[script.Type]; ok {
-		output, err = RunScriptFuncImplementation(target, workdir,
+		output, err = RunScriptFuncImplementation(target, fs,
 			aliases,
 			rootOutput, input)
 

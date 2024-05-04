@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"deployto/src"
+	"deployto/src/filesystem"
 	"deployto/src/types"
 	"deployto/src/yaml"
 	"errors"
@@ -15,25 +16,25 @@ func init() {
 	RunScriptFuncImplementations[""] = Template //default script type
 }
 
-func Template(target *types.Target, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Template(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	selector := types.DecodeTemplateArg(input)
-	return runTemplateTyped(target, workdir, aliases, rootValues, selector)
+	return runTemplateTyped(target, fs, aliases, rootValues, selector)
 }
 
-func runTemplateTyped(target *types.Target, workdir string, aliases []string, rootValues types.Values, selector *types.TemplateArg) (output types.Values, err error) {
+func runTemplateTyped(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues types.Values, selector *types.TemplateArg) (output types.Values, err error) {
 	log.Debug().Strs("aliases", aliases).Msg("Search template")
 	template := searchTemplate(selector)
-	log.Debug().Str("templateDir", template.GetDir()).Msg("found template")
+	log.Debug().Str("templateDir", template.Status.FileName).Msg("found template")
 	//var similars []*types.Component
 	//TODO cache
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	return Component(target, workdir, aliases, rootValues, selector.Values)
+	return RunSingleComponent(target, fs, aliases, rootValues, selector.Values, template)
 }
 
 func searchTemplate(selector *types.TemplateArg) *types.Component {
-	var repositories []*src.Filesystem
+	var repositories []*filesystem.Filesystem
 	for _, r := range src.GetTemplateRepositories() {
-		repositories = append(repositories, src.GetFilesystem(r))
+		repositories = append(repositories, filesystem.GetFilesystem(r))
 	}
 	if len(repositories) == 0 {
 		log.Warn().Msg("Template repositories not found")
@@ -53,15 +54,15 @@ func searchTemplate(selector *types.TemplateArg) *types.Component {
 	return nil
 }
 
-func tryGet(filesystem *src.Filesystem, path string) *types.Component {
-	_, err := filesystem.FS.Stat(path)
+func tryGet(fs *filesystem.Filesystem, path string) *types.Component {
+	_, err := fs.FS.Stat(path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
 			log.Error().Err(err).Str("path", path).Msg("filesystem.Stat error")
 		}
 		return nil
 	}
-	comps := yaml.GetFromFile[types.Component](filesystem, path)
+	comps := yaml.GetFromFile[types.Component](fs, path)
 	if len(comps) == 0 {
 		log.Error().Str("path", path).Msg("file exists, but component not found")
 	}

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"path/filepath"
+	"deployto/src/filesystem"
 )
 
 const DeploytoAPIVersion = "deployto.dev/v1beta1"
@@ -11,15 +11,9 @@ type Base struct {
 	APIVersion string    `json:"apiVersion,omitempty" yaml:"apiVersion,omitempty"`
 	Meta       *MetaData `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	Status     struct {
-		FileName string
+		Filesystem *filesystem.Filesystem
+		FileName   string
 	}
-}
-
-const DeploytoPath = ".deployto" //TODO bug this const defined more then in one place
-
-func (b *Base) GetDir() (path string) {
-	path = filepath.Dir(b.Status.FileName)
-	return path
 }
 
 type MetaData struct {
