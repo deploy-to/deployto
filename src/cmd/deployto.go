@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"deployto/src"
 	"deployto/src/deploy"
-	"deployto/src/helper"
 	"deployto/src/types"
 	"deployto/src/yaml"
 	"errors"
@@ -26,14 +26,19 @@ func Deployto(cCtx *cli.Context) error {
 		return err
 	}
 
-	path, err = helper.GetProjectRoot(path, helper.DeploytoPath)
-	if err != nil {
-		log.Error().Err(err).Msg("Get DeploytoPath error")
-		return err
-	}
+	// path, err = helper.GetProjectRoot(path, helper.DeploytoPath)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("Get DeploytoPath error")
+	// 	return err
+	// }
+	// if !helper.IsDeploytoPath(fs, path) {
+	// 	path = helper.GetDeploytoPath(fs, path)
+	// }
+
+	filesystem := src.GetFilesystem("file://" + path)
 
 	// Envirement
-	environments := yaml.Get[types.Environment](path)
+	environments := yaml.Get[types.Environment](filesystem, "/")
 	var environment *types.Environment
 	for _, e := range environments {
 		if e.Base.Meta.Name == environmentArg {
@@ -47,7 +52,7 @@ func Deployto(cCtx *cli.Context) error {
 	log.Debug().Str("name", environment.Base.Meta.Name).Msg("Environment found")
 	// Targets
 	var targets []*types.Target
-	for _, t := range yaml.Get[types.Target](path) {
+	for _, t := range yaml.Get[types.Target](filesystem, "/") {
 		if slices.Contains(environment.Spec.Targets, t.Base.Meta.Name) {
 			targets = append(targets, t)
 		}

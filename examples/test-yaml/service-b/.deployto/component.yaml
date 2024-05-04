@@ -6,12 +6,10 @@ spec:
   dependencies:
     build:
       type: job
-    only4b:
-      name: postgresql
     shared-db-between-services:
       root: true
-      name: postgresql
-    s3:
+      resource: postgresql
+#    s3:
   script:
     type: helm
     repository: file://../helm

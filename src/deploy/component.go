@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"deployto/src"
 	"deployto/src/gitclient"
 	"deployto/src/types"
 	"deployto/src/yaml"
@@ -27,12 +28,10 @@ func Component(target *types.Target, workdir string, aliases []string, rootValue
 		panic("not implimented")
 	}
 
+	filesystem := src.GetFilesystem("file://" + workdir)
+
 	// COMPONENTS
-	comps, err := yaml.GetComponent(workdir)
-	if err != nil {
-		log.Error().Err(err).Str("path", workdir).Msg("Components search error")
-		return nil, err
-	}
+	comps := yaml.Get[types.Component](filesystem, "/")
 	for _, c := range comps {
 		workdir = c.GetDir()
 
@@ -50,7 +49,7 @@ func Component(target *types.Target, workdir string, aliases []string, rootValue
 
 		// зависимость git  выполняется всегда
 		l.Debug().Msg("Get commit hash and tags")
-		dependenciesOutput["git"] = gitclient.GetValues(workdir)
+		dependenciesOutput["git"] = gitclient.GetValues(filesystem, workdir)
 
 		dependencies := types.Get(c.Spec, map[string]any(nil), "dependencies")
 		for alias, dependencyAsMap := range dependencies {

@@ -1,6 +1,7 @@
 package gitclient
 
 import (
+	"deployto/src"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,12 +14,13 @@ import (
 )
 
 func TestGetValues_GeneralChecks(t *testing.T) {
-	tmpDir, r, w := prepareGit(t)
+	tmpDir, fs, r, w := prepareGit(t)
 	defer func() {
 		os.RemoveAll(tmpDir)
 	}()
 
-	output := GetValues(tmpDir)
+	//just init
+	output := GetValues(fs, "/")
 	if len(output) != 2 {
 		t.Errorf("git just init: the output does not contain 2 elements: %v", output)
 	}
@@ -41,7 +43,7 @@ func TestGetValues_GeneralChecks(t *testing.T) {
 	setTag(t, r, "v1.0.0")
 	setTag(t, r, "v1.0.1")
 
-	output = GetValues(tmpDir)
+	output = GetValues(fs, "/")
 	if len(output) != 3 {
 		t.Errorf("git first commit: the output does not contain 2 elements: %v", output)
 	}
@@ -58,7 +60,7 @@ func TestGetValues_GeneralChecks(t *testing.T) {
 	//dirty git
 	doChange(t, tmpDir)
 
-	output = GetValues(tmpDir)
+	output = GetValues(fs, "/")
 	if len(output) != 3 {
 		t.Errorf("dirty git: the output does not contain 3 elements: %v", output)
 	}
@@ -83,7 +85,7 @@ func TestGetValues_GeneralChecks(t *testing.T) {
 }
 
 func TestGetValues_GetCurrentTag(t *testing.T) {
-	tmpDir, r, w := prepareGit(t)
+	tmpDir, fs, r, w := prepareGit(t)
 	defer func() {
 		os.RemoveAll(tmpDir)
 	}()
@@ -113,17 +115,19 @@ func TestGetValues_GetCurrentTag(t *testing.T) {
 	err := w.Checkout(&git.CheckoutOptions{Hash: commit})
 	checkIfError(t, err)
 
-	output := GetValues(tmpDir)
+	output := GetValues(fs, tmpDir)
 	if !strings.HasPrefix(output["Tag"].(string), "v1.1.1") {
 		t.Errorf("dirty git: prefix error: GetValues() = %v, want Tag: v1.1.1", output)
 	}
 }
 
-func prepareGit(t *testing.T) (string, *git.Repository, *git.Worktree) {
+func prepareGit(t *testing.T) (string, *src.Filesystem, *git.Repository, *git.Worktree) {
 	//Create git repo
-	tmpDir, err := os.MkdirTemp("", "deployto-unittests*")
+	tmpDir, err := os.MkdirTemp("", "deployto-testgetvalues*")
 	checkIfError(t, err)
 	t.Logf("tmp dir: %s", tmpDir)
+
+	fs := src.GetFilesystem("file://" + tmpDir)
 
 	//git init
 	r, err := git.PlainInit(tmpDir, false)
@@ -131,7 +135,7 @@ func prepareGit(t *testing.T) (string, *git.Repository, *git.Worktree) {
 	w, err := r.Worktree()
 	checkIfError(t, err)
 
-	return tmpDir, r, w
+	return tmpDir, fs, r, w
 }
 
 func doChange(t *testing.T, tmpDir string) {
@@ -162,7 +166,7 @@ func doCommit(t *testing.T, w *git.Worktree) plumbing.Hash {
 
 func checkIfError(t *testing.T, err error) {
 	if err != nil {
-		t.FailNow()
+		t.Errorf("unexpected error: %v", err)
 	}
 }
 

@@ -3,7 +3,6 @@ package deploy
 import (
 	"deployto/src/types"
 	"errors"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 )
@@ -23,7 +22,14 @@ func RunScript(target *types.Target, workdir string, aliases []string, rootOutpu
 	l.Debug().Any("script", script).Msg("RunScript")
 	//TODO если script.Type не указан, но указаны repository и/или path, то определять что находится по этом пути, и задавать script.Type автоматом
 
-	input := lookupValues(script.Values, scriptContext)
+	//input := lookupValues(script.Values, scriptContext)
+	input := script.Values
+	if input == nil {
+		input = make(types.Values)
+	}
+	if _, ok := input["resource"]; !ok {
+		input["resource"] = aliases[len(aliases)-1]
+	}
 
 	if RunScriptFuncImplementation, ok := RunScriptFuncImplementations[script.Type]; ok {
 		output, err = RunScriptFuncImplementation(target, workdir,
@@ -42,25 +48,25 @@ func RunScript(target *types.Target, workdir string, aliases []string, rootOutpu
 	return nil, errors.New("RUNSCRIPT FUNCTION NOT FOUND")
 }
 
-func lookupValues(values types.Values, scriptContext types.Values) types.Values {
-	if values == nil {
-		return nil
-	}
-	result := make(types.Values, len(values))
+// func lookupValues(values types.Values, scriptContext types.Values) types.Values {
+// 	if values == nil {
+// 		return nil
+// 	}
+// 	result := make(types.Values, len(values))
 
-	for k, v := range values {
-		if v, ok := v.(types.Values); ok {
-			result[k] = lookupValues(v, scriptContext)
-			continue
-		}
-		if deploytoStr, ok := v.(string); ok {
-			if deploytoStr, ok = strings.CutPrefix(deploytoStr, "__deployto-lookup:"); ok {
-				deploytoStr = strings.Trim(deploytoStr, " ")
-				result[k] = types.Get(scriptContext, "", deploytoStr)
-				continue
-			}
-		}
-		result[k] = v
-	}
-	return result
-}
+// 	for k, v := range values {
+// 		if v, ok := v.(types.Values); ok {
+// 			result[k] = lookupValues(v, scriptContext)
+// 			continue
+// 		}
+// 		if deploytoStr, ok := v.(string); ok {
+// 			if deploytoStr, ok = strings.CutPrefix(deploytoStr, "__deployto-lookup:"); ok {
+// 				deploytoStr = strings.Trim(deploytoStr, " ")
+// 				result[k] = types.Get(scriptContext, "", deploytoStr)
+// 				continue
+// 			}
+// 		}
+// 		result[k] = v
+// 	}
+// 	return result
+// }
