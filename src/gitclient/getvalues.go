@@ -77,7 +77,7 @@ func GetValues(fs *filesystem.Filesystem, path string) (values types.Values) {
 
 	if len(Tags) > 0 {
 		sort.Strings(Tags)
-		values["Tag"] = Tags[len(Tags)-1] + dirtyPostfix
+		values["Tag"] = Tags[0] + dirtyPostfix
 	}
 
 	log.Debug().Any("values", values).Msg("gitclient.GetValues")
