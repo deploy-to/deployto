@@ -1,9 +1,11 @@
 package deploy
 
 import (
+	"bufio"
 	"context"
 	"deployto/src/filesystem"
 	"deployto/src/types"
+	"os"
 
 	"github.com/rs/zerolog/log"
 
@@ -15,12 +17,20 @@ func init() {
 }
 
 func Terraform(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
-
 	execPath := "/usr/local/bin/terraform"
 
 	tf, err := tfexec.NewTerraform(workdir, execPath)
 	if err != nil {
 		log.Error().Err(err).Msg("error running NewTerraformr")
+		return nil, err
+	}
+	f := os.Stdout
+	writer := bufio.NewWriter(f)
+	tf.SetStdout(writer)
+	tf.SetStderr(writer)
+	err = tf.Init(context.Background(), tfexec.Upgrade(true))
+	if err != nil {
+		log.Error().Err(err).Msg("error running Init")
 		return nil, err
 	}
 
@@ -37,7 +47,13 @@ func Terraform(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 		}
 	}
 	//state, err := tf.ShowStateFile(context.Background())
-	output["terraform"] = ""
+	outtf, err := tf.Output(context.Background())
+	if err != nil {
+		log.Error().Err(err).Msg("error running Plan")
+		return nil, err
+	}
+	scriptOutput := make(types.Values)
+	scriptOutput["terraform"] = outtf
 
-	return
+	return scriptOutput, nil
 }
