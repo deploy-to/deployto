@@ -75,6 +75,10 @@ func GetValues(fs *filesystem.Filesystem, path string) (values types.Values) {
 		log.Debug().Err(err).Msg("Git tag not found")
 	}
 
+	//same logic ass cmd
+	// info https://gist.github.com/rponte/fdc0724dd984088606b0
+	//git describe --abbrev=0 —-tag
+	//git tag --sort=taggerdate
 	if len(Tags) > 0 {
 		sort.Strings(Tags)
 		values["Tag"] = Tags[0] + dirtyPostfix

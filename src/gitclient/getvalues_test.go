@@ -40,7 +40,6 @@ func TestGetValues_GeneralChecks(t *testing.T) {
 	//git first commit
 	doChange(t, tmpDir)
 	commit := doCommit(t, w)
-	setTag(t, r, "v1.0.0")
 	setTag(t, r, "v1.0.1")
 
 	output = GetValues(fs, "/")
@@ -70,6 +69,9 @@ func TestGetValues_GeneralChecks(t *testing.T) {
 	if !strings.HasPrefix(output["CommitShort"].(string), commit.String()[:7]) {
 		t.Errorf("dirty git: prefix error: GetValues()[CommitShort] = %v, want %v", output, commit.String()[:7])
 	}
+	if !strings.HasPrefix(output["Tag"].(string), "v1.0.1") {
+		t.Errorf("dirty git: prefix error: GetValues()[Tag] = %v, want %v", output, "v1.0.1")
+	}
 	if !strings.Contains(output["Commit"].(string), "+dirty.uuid") {
 		t.Errorf("dirty git: dirty mark not exists: GetValues()[CommitShort] = %v", output)
 	}
@@ -79,9 +81,7 @@ func TestGetValues_GeneralChecks(t *testing.T) {
 	if !strings.Contains(output["Tag"].(string), "+dirty.uuid") {
 		t.Errorf("dirty git: dirty mark not exists: GetValues()[Tag] = %v", output)
 	}
-	if !strings.HasPrefix(output["Tag"].(string), "v1.0.1") {
-		t.Errorf("dirty git: prefix error: GetValues()[Tag] = %v, want %v", output, "v1.0.1")
-	}
+
 }
 
 func TestGetValues_GetCurrentTag(t *testing.T) {
@@ -118,6 +118,19 @@ func TestGetValues_GetCurrentTag(t *testing.T) {
 	output := GetValues(fs, tmpDir)
 	if !strings.HasPrefix(output["Tag"].(string), "v1.1.1") {
 		t.Errorf("dirty git: prefix error: GetValues() = %v, want Tag: v1.1.1", output)
+	}
+
+	// many tag on the same commit
+	doChange(t, tmpDir)
+	commit = doCommit(t, w)
+
+	setTag(t, r, "v1.0.2-rc")
+	//add tag after test done
+	setTag(t, r, "v1.0.2")
+
+	output = GetValues(fs, tmpDir)
+	if !strings.HasPrefix(output["Tag"].(string), "v1.0.2") {
+		t.Errorf("dirty git: prefix error: GetValues() = %v, want Tag: v1.0.2", output)
 	}
 }
 
