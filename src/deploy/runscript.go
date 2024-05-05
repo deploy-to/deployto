@@ -28,25 +28,20 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 	if input == nil {
 		input = make(types.Values)
 	}
-	if _, ok := input["resource"]; !ok {
-		input["resource"] = aliases[len(aliases)-1]
+	if _, ok := input["name"]; !ok {
+		input["name"] = aliases[len(aliases)-1]
 	}
 
-	repository, repositoryExists := input["repository"]
-	delete(input, "repository")
-	path, pathExists := input["path"]
-	delete(input, "path")
-	if repositoryExists {
-		repositoryFS = filesystem.GetFilesystem(repository.(string))
-		if pathExists {
-			workdir = path.(string)
+	if script.Repository != "" {
+		if filesystem.Supported(script.Repository) {
+			repositoryFS = filesystem.Get(script.Repository)
+			workdir = script.Path
 		} else {
-			workdir = repositoryFS.FS.Root()
+			input["repository"] = script.Repository
+			input["path"] = script.Path
 		}
 	} else {
-		if pathExists {
-			workdir = repositoryFS.FS.Join(workdir, path.(string))
-		}
+		workdir = repositoryFS.FS.Join(workdir, script.Path)
 	}
 
 	if RunScriptFuncImplementation, ok := RunScriptFuncImplementations[script.Type]; ok {

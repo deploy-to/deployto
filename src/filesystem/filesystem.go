@@ -25,7 +25,12 @@ type Filesystem struct {
 	FS        billy.Filesystem
 }
 
-func GetFilesystem(uri string) *Filesystem {
+func Supported(uri string) bool {
+	return strings.HasPrefix(uri, "file://") ||
+		strings.HasSuffix(uri, ".git")
+}
+
+func Get(uri string) *Filesystem {
 	if localPath, isLOCAL := strings.CutPrefix(uri, "file://"); isLOCAL {
 		return &Filesystem{
 			Type:      LOCAL,
@@ -89,7 +94,7 @@ func searchLocalRoot(fs *Filesystem, path string, dirName string) *Filesystem {
 	for {
 		if IsDirExists(filepath.Join(currentPath, dirName)) {
 			log.Debug().Str("searchDir", dirName).Str("path", currentPath).Msg("searchDir found")
-			return GetFilesystem("file://" + currentPath)
+			return Get("file://" + currentPath)
 		}
 		log.Trace().Str("searchDir", dirName).Str("path", currentPath).Msg("searchDir not found - go to parent")
 

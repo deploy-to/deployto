@@ -41,6 +41,12 @@ func main() {
 				Usage:       "Log level: trace, debug, warn, info, fatal, panic, absent, disable",
 				Destination: &stg.Loglevel,
 			},
+			&cli.StringFlag{
+				Name:        "kubeconfig",
+				EnvVars:     []string{"KUBECONFIG"},
+				Usage:       "Set to use when target.kubeconfig.usedefault is set.",
+				Destination: &types.SystemKubeconfig,
+			},
 		},
 	}
 	sort.Sort(cli.FlagsByName(app.Flags))

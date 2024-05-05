@@ -34,7 +34,7 @@ func runTemplateTyped(target *types.Target, _ *filesystem.Filesystem, aliases []
 func searchTemplate(selector *types.TemplateArg) *types.Component {
 	var repositories []*filesystem.Filesystem
 	for _, r := range src.GetTemplateRepositories() {
-		repositories = append(repositories, filesystem.GetFilesystem(r))
+		repositories = append(repositories, filesystem.Get(r))
 	}
 	if len(repositories) == 0 {
 		log.Warn().Msg("Template repositories not found")

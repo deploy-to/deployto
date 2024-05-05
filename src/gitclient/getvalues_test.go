@@ -140,7 +140,7 @@ func prepareGit(t *testing.T) (string, *filesystem.Filesystem, *git.Repository, 
 	checkIfError(t, err)
 	t.Logf("tmp dir: %s", tmpDir)
 
-	fs := filesystem.GetFilesystem("file://" + tmpDir)
+	fs := filesystem.Get("file://" + tmpDir)
 
 	//git init
 	r, err := git.PlainInit(tmpDir, false)

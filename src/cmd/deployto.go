@@ -26,7 +26,7 @@ func Deployto(cCtx *cli.Context) error {
 		return err
 	}
 
-	fs := filesystem.GetDeploytoRootFilesystem(filesystem.GetFilesystem("file://"+path), "/")
+	fs := filesystem.GetDeploytoRootFilesystem(filesystem.Get("file://"+path), "/")
 	if fs == nil {
 		log.Error().Msg("components dir (.deployto) not found")
 		return errors.New("components dir (.deployto) not found")

@@ -12,8 +12,15 @@ spec:
     #  s3:
     postgresql:
       type: helm
-      repository: file://../helm
-      values:
+      repository: https://charts.bitnami.com/bitnami
+      name:             postgresql
+      version:          "15.1.0"
+      fullnameOverride: postgresql-standalone
+      auth:
+        database:         servicea-db
+        username:         servicea-user
+        password:         HOrFk14CyX
+        postgresPassword": xxdsdsddsxxxx
         
   # script:
   #   type: helm
