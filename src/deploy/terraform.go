@@ -17,7 +17,7 @@ func init() {
 	RunScriptFuncImplementations["terraform"] = Terraform
 }
 
-func Terraform(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Terraform(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 
 	installer := &releases.ExactVersion{
 		Product: product.Terraform,
