@@ -7,7 +7,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": ["--ll=trace"],
+            "args": ["--ll=debug"],
             "cwd": "${workspaceFolder}/examples/test-yaml"
         }
     ]

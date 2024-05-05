@@ -12,7 +12,7 @@ func init() {
 	RunScriptFuncImplementations["helm"] = Helm
 }
 
-func Helm(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Helm(target *types.Target, fs *filesystem.Filesystem, workDir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	output = types.Values{
 		"ConnectionString": "http://" + strings.Join(aliases, "."),
 	}

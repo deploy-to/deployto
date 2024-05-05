@@ -33,7 +33,7 @@ func Deployto(cCtx *cli.Context) error {
 	}
 
 	// Envirement
-	environments := yaml.Get[types.Environment](fs, "/")
+	environments := yaml.Get[types.Environment](fs, filesystem.DeploytoDirName)
 	var environment *types.Environment
 	for _, e := range environments {
 		if e.Base.Meta.Name == environmentArg {
@@ -47,7 +47,7 @@ func Deployto(cCtx *cli.Context) error {
 	log.Debug().Str("name", environment.Base.Meta.Name).Msg("Environment found")
 	// Targets
 	var targets []*types.Target
-	for _, t := range yaml.Get[types.Target](fs, "/") {
+	for _, t := range yaml.Get[types.Target](fs, filesystem.DeploytoDirName) {
 		if slices.Contains(environment.Spec.Targets, t.Base.Meta.Name) {
 			targets = append(targets, t)
 		}
@@ -65,7 +65,7 @@ func Deployto(cCtx *cli.Context) error {
 		rootValues := make(types.Values)
 		//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
 		_, e := deploy.Component(t,
-			fs,
+			fs, "/",
 			nil,
 			rootValues, types.Values(nil))
 		if e != nil {
