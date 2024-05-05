@@ -18,8 +18,8 @@ func TestGetFilesystem(t *testing.T) {
 
 	fs := GetFilesystem("file://" + tmpDir)
 
-	if fs.BaseDir != "file://"+tmpDir {
-		t.Errorf("BaseDir has changed: %s", fs.BaseDir)
+	if fs.URI != "file://"+tmpDir {
+		t.Errorf("BaseDir has changed: %s", fs.URI)
 	}
 
 	f, err := fs.FS.Open("data.txt")
@@ -59,8 +59,8 @@ func TestGetGitRootFilesystem(t *testing.T) {
 	err = os.Mkdir(filepath.Join(tmpDir, ".git"), 0700)
 	checkIfError(t, err)
 	result = GetGitRootFilesystem(tmpFS, "/")
-	if result == nil || result.BaseDir != tmpFS.BaseDir {
-		t.Errorf("wait same BaseDir, get: %s", result.BaseDir)
+	if result == nil || result.URI != tmpFS.URI {
+		t.Errorf("wait same BaseDir, get: %s", result.URI)
 	}
 
 	//Check root git path from sub sub sub path
@@ -68,22 +68,22 @@ func TestGetGitRootFilesystem(t *testing.T) {
 	err = os.MkdirAll(filepath.Join(tmpDir, subsubsubPath), 0700)
 	checkIfError(t, err)
 	result = GetGitRootFilesystem(tmpFS, subsubsubPath)
-	if result == nil || result.BaseDir != tmpFS.BaseDir {
-		t.Errorf("wait same BaseDir, get: %s", result.BaseDir)
+	if result == nil || result.URI != tmpFS.URI {
+		t.Errorf("wait same BaseDir, get: %s", result.URI)
 	}
 
 	// Check git in git
 	err = os.MkdirAll(filepath.Join(tmpDir, "A", ".git"), 0700)
 	checkIfError(t, err)
 	result = GetGitRootFilesystem(tmpFS, subsubsubPath)
-	if result == nil || result.BaseDir != "file://"+filepath.Join(tmpDir, "A") {
-		t.Errorf("wait same BaseDir, get: %s", result.BaseDir)
+	if result == nil || result.URI != "file://"+filepath.Join(tmpDir, "A") {
+		t.Errorf("wait same BaseDir, get: %s", result.URI)
 	}
 
 	//Check root git path from sub sub sub filesystem
 	subsubsubFS := GetFilesystem("file://" + filepath.Join(tmpDir, subsubsubPath))
 	result = GetGitRootFilesystem(subsubsubFS, "/")
-	if result == nil || result.BaseDir != "file://"+filepath.Join(tmpDir, "A") {
-		t.Errorf("wait same BaseDir, get: %s", result.BaseDir)
+	if result == nil || result.URI != "file://"+filepath.Join(tmpDir, "A") {
+		t.Errorf("wait same BaseDir, get: %s", result.URI)
 	}
 }

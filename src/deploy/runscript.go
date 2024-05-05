@@ -8,11 +8,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type RunScriptFuncImplementationType = func(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues, values types.Values) (output map[string]any, err error)
+type RunScriptFuncImplementationType = func(target *types.Target, fs *filesystem.Filesystem, workDir string, aliases []string, rootValues, values types.Values) (output map[string]any, err error)
 
 var RunScriptFuncImplementations = map[string]RunScriptFuncImplementationType{}
 
-func RunScript(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootOutput types.Values, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
+func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootOutput types.Values, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
 	l := log.With().Strs("aliases", aliases).Logger()
 
 	if theDependencyWasDeployedEarlier, ok := rootOutput[buildAlias(aliases)]; ok {
@@ -32,8 +32,25 @@ func RunScript(target *types.Target, fs *filesystem.Filesystem, aliases []string
 		input["resource"] = aliases[len(aliases)-1]
 	}
 
+	repository, repositoryExists := input["repository"]
+	delete(input, "repository")
+	path, pathExists := input["path"]
+	delete(input, "path")
+	if repositoryExists {
+		repositoryFS = filesystem.GetFilesystem(repository.(string))
+		if pathExists {
+			workdir = path.(string)
+		} else {
+			workdir = repositoryFS.FS.Root()
+		}
+	} else {
+		if pathExists {
+			workdir = repositoryFS.FS.Join(workdir, path.(string))
+		}
+	}
+
 	if RunScriptFuncImplementation, ok := RunScriptFuncImplementations[script.Type]; ok {
-		output, err = RunScriptFuncImplementation(target, fs,
+		output, err = RunScriptFuncImplementation(target, repositoryFS, workdir,
 			aliases,
 			rootOutput, input)
 

@@ -6,24 +6,24 @@ spec:
   dependencies:
     build:
       type: job
-#    service-b:
-#      type: component
-#      repository: git@github.com:deploy-to/deployto.git
-#      path: /examples/test-yaml/service-b
-    service-b-localpath:   #only for test localpath, remove in future
+    # service-b:
+    #   type: component
+    #   repository: git@github.com:deploy-to/deployto.git
+    #   path: /examples/test-yaml/service-b
+    service-b-localpath:
       type: component
       path: ../../service-b
-    db-a:
-      resource: postgresql
-    shared-db:
-      root: true
-      resource: postgresql
-      version: "1.1.1"
-      name: "postgresql-helm-ha"
-  script:
-    type: helm
-    path: file://../helm
-    build:
-      image: "__deployto-lookup: build.image"
-    shared-db: "__deployto-lookup: shared-db-between-services.ConnectionString"
-    s3: "__deployto-lookup: s3.ConnectionString"
+  #   db-a:
+  #     resource: postgresql
+  #   shared-db:
+  #     root: true
+  #     resource: postgresql
+  #     version: "1.1.1"
+  #     name: "postgresql-helm-ha"
+  # script:
+  #   type: helm
+  #   path: file://../helm
+  #   build:
+  #     image: "__deployto-lookup: build.image"
+  #   shared-db: "__deployto-lookup: shared-db-between-services.ConnectionString"
+  #   s3: "__deployto-lookup: s3.ConnectionString"

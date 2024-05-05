@@ -16,19 +16,19 @@ func init() {
 	RunScriptFuncImplementations[""] = Template //default script type
 }
 
-func Template(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Template(target *types.Target, fs *filesystem.Filesystem, workDir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	selector := types.DecodeTemplateArg(input)
 	return runTemplateTyped(target, fs, aliases, rootValues, selector)
 }
 
-func runTemplateTyped(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues types.Values, selector *types.TemplateArg) (output types.Values, err error) {
+func runTemplateTyped(target *types.Target, _ *filesystem.Filesystem, aliases []string, rootValues types.Values, selector *types.TemplateArg) (output types.Values, err error) {
 	log.Debug().Strs("aliases", aliases).Msg("Search template")
 	template := searchTemplate(selector)
 	log.Debug().Str("templateDir", template.Status.FileName).Msg("found template")
 	//var similars []*types.Component
 	//TODO cache
 	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	return RunSingleComponent(target, fs, aliases, rootValues, selector.Values, template)
+	return RunSingleComponent(target, aliases, rootValues, selector.Values, template)
 }
 
 func searchTemplate(selector *types.TemplateArg) *types.Component {

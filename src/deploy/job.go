@@ -12,7 +12,7 @@ func init() {
 	RunScriptFuncImplementations["job"] = Job
 }
 
-func Job(target *types.Target, fs *filesystem.Filesystem, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Job(target *types.Target, fs *filesystem.Filesystem, workDir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	uuid := shortuuid.New()
 	output = types.Values{
 		"image":      aliases[len(aliases)-1],

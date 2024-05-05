@@ -122,7 +122,7 @@ func TestGetValues_GetCurrentTag(t *testing.T) {
 
 	// many tag on the same commit
 	doChange(t, tmpDir)
-	commit = doCommit(t, w)
+	doCommit(t, w)
 
 	setTag(t, r, "v1.0.2-rc")
 	//add tag after test done

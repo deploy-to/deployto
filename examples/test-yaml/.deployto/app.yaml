@@ -3,7 +3,10 @@ kind: Component
 metadata:
   name: FullApplication
 spec:
-  script:
-    type: component
-    root: true
-    path: ../service-a
+  dependencies:
+    service-a:
+      type: component
+      root: true
+      path: ../service-a
+  # script:
+  # TODO helm with ingress
