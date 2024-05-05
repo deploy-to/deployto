@@ -1,0 +1,3 @@
+templateRepositories:
+- file:///home/alex/deployto/examples/template-repositories/2 in-corporate-network
+- file:///home/alex/deployto/examples/template-repositories/1 github.com_deploy-to_templates

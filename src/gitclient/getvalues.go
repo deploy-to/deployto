@@ -1,28 +1,38 @@
 package gitclient
 
 import (
-	"deployto/src/helper"
+	"deployto/src/filesystem"
 	"deployto/src/types"
-	"path/filepath"
+	"sort"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/cache"
+	gogitfilesystem "github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/lithammer/shortuuid/v3"
 	"github.com/rs/zerolog/log"
 )
 
-func GetValues(path string) (values types.Values) {
+func GetValues(fs *filesystem.Filesystem, path string) (values types.Values) {
 	values = make(types.Values)
+
+	gitRoot := filesystem.GetGitRootFilesystem(fs, path)
+	if gitRoot == nil {
+		log.Error().Msg("git not found")
+		return
+	}
+
+	// set default result
 	dirtyPostfix := "+dirty.uuid" + shortuuid.New()
 	values["Commit"] = "NO_GIT" + dirtyPostfix
 	values["CommitShort"] = "NO_GIT" + dirtyPostfix
 
-	gitRoot, err := helper.GetProjectRoot(path, ".git")
+	storer, err := gitRoot.FS.Chroot(git.GitDirName)
 	if err != nil {
-		log.Error().Err(err).Msg("Search git root error")
+		log.Error().Err(err).Msg("git storer not fount")
 		return
 	}
-
-	rep, err := git.PlainOpen(filepath.Dir(gitRoot))
+	rep, err := git.Open(gogitfilesystem.NewStorage(storer, cache.NewObjectLRUDefault()), gitRoot.FS)
 	if err != nil {
 		log.Error().Err(err).Msg("Error opening git repository")
 		return
@@ -52,12 +62,26 @@ func GetValues(path string) (values types.Values) {
 	values["CommitShort"] = ref.Hash().String()[:7] + dirtyPostfix
 
 	//Find tag (semver or another one)
-	tag, err := rep.TagObject(ref.Hash())
+	tagrefs, err := rep.Tags()
 	if err != nil {
 		log.Debug().Err(err).Msg("Git tag not found")
 	}
-	if tag != nil {
-		values["Tag"] = tag.Name + dirtyPostfix
+	var Tags []string
+	err = tagrefs.ForEach(func(t *plumbing.Reference) error {
+		Tags = append(Tags, t.Name().Short())
+		return nil
+	})
+	if err != nil {
+		log.Debug().Err(err).Msg("Git tag not found")
+	}
+
+	//same logic ass cmd
+	// info https://gist.github.com/rponte/fdc0724dd984088606b0
+	//git describe --abbrev=0 —-tag
+	//git tag --sort=taggerdate
+	if len(Tags) > 0 {
+		sort.Strings(Tags)
+		values["Tag"] = Tags[0] + dirtyPostfix
 	}
 
 	log.Debug().Any("values", values).Msg("gitclient.GetValues")

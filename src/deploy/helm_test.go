@@ -1,3 +1,5 @@
+//go:build K8SIntegration
+
 // for call this test 1) setup k8s environment  2) run $go test --tags=K8SIntegration  ./... -run K8SIntegration
 package deploy
 
@@ -23,7 +25,7 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			"postgresPassword": "xxdsdsddsxxxx",
 		},
 	}
-	output, err := Helm(getTarget(t), "", []string{"AAAAA"}, types.Values(nil), inputs)
+	output, err := Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs)
 	if err != nil {
 		t.Fatalf("Helm error %v", err)
 	}
@@ -77,7 +79,7 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			"repmgrPassword":   "repmgrpss",
 		},
 	}
-	output, err = Helm(getTarget(t), "", []string{"AAAAA"}, types.Values(nil), inputs)
+	output, err = Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs)
 	if err != nil {
 		t.Fatalf("Helm error %v", err)
 	}
@@ -110,12 +112,12 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			},
 		},
 	}
-	_, err = Helm(getTarget(t), "", []string{"AAAAA"}, types.Values(nil), inputs)
-	if err != nil {
-		t.Fatalf("Helm error %v", err)
+	_, err = Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs)
+	if err == nil {
+		t.Fatalf("wait helm error")
 	}
 	errorText := "no chart version found for postgresql-ha-99.99.99"
-	if !strings.HasPrefix(err.Error(), errorText) {
+	if !strings.Contains(err.Error(), errorText) {
 		t.Errorf("Need chart error = %v, want %v", err.Error(), errorText)
 	}
 }

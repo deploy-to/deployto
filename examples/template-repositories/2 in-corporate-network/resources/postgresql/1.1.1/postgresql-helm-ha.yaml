@@ -1,0 +1,11 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: postgresql-helm-ha
+spec:
+  script:
+    type: helm
+    helm:
+      repository: "https://charts.bitnami.com/bitnami"
+      name:       "postgresql"
+      version:    "15.1.0"

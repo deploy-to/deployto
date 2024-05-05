@@ -1,0 +1,8 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: postgresql
+spec:
+  script:
+    type: component
+    path: ./1.1.1/default.yaml

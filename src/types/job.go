@@ -1,15 +1,3 @@
-// apiVersion: deployto.dev/v1beta1
-// kind: Envirement
-// meta:
-//   name: dev
-// spec:
-//   targets:
-//   - dev-target
-//   workflow:
-//     type: target-by-target
-//   helm:
-//     repository: file://./envirements-helm/dev
-
 package types
 
 type Job struct {

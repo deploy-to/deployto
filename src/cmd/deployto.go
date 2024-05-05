@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"deployto/src/deploy"
-	"deployto/src/helper"
+	"deployto/src/filesystem"
 	"deployto/src/types"
 	"deployto/src/yaml"
 	"errors"
@@ -26,14 +26,14 @@ func Deployto(cCtx *cli.Context) error {
 		return err
 	}
 
-	path, err = helper.GetProjectRoot(path, helper.DeploytoPath)
-	if err != nil {
-		log.Error().Err(err).Msg("Get DeploytoPath error")
-		return err
+	fs := filesystem.GetDeploytoRootFilesystem(filesystem.GetFilesystem("file://"+path), "/")
+	if fs == nil {
+		log.Error().Msg("components dir (.deployto) not found")
+		return errors.New("components dir (.deployto) not found")
 	}
 
 	// Envirement
-	environments := yaml.Get[types.Environment](path)
+	environments := yaml.Get[types.Environment](fs, filesystem.DeploytoDirName)
 	var environment *types.Environment
 	for _, e := range environments {
 		if e.Base.Meta.Name == environmentArg {
@@ -47,7 +47,7 @@ func Deployto(cCtx *cli.Context) error {
 	log.Debug().Str("name", environment.Base.Meta.Name).Msg("Environment found")
 	// Targets
 	var targets []*types.Target
-	for _, t := range yaml.Get[types.Target](path) {
+	for _, t := range yaml.Get[types.Target](fs, filesystem.DeploytoDirName) {
 		if slices.Contains(environment.Spec.Targets, t.Base.Meta.Name) {
 			targets = append(targets, t)
 		}
@@ -65,7 +65,7 @@ func Deployto(cCtx *cli.Context) error {
 		rootValues := make(types.Values)
 		//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
 		_, e := deploy.Component(t,
-			path,
+			fs, "/",
 			nil,
 			rootValues, types.Values(nil))
 		if e != nil {

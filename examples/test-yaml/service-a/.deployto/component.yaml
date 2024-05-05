@@ -1,25 +1,29 @@
 apiVersion: deployto.dev/v1beta1
 kind: Component
 metadata:
-  name: serviceA
+  name: service-a
 spec:
   dependencies:
     build:
-      type: job    # если values.name  не установлен, то использовать alias
-    service-b:
+      type: job
+    # service-b:
+    #   type: component
+    #   repository: git@github.com:deploy-to/deployto.git
+    #   path: /examples/test-yaml/service-b
+    service-b-localpath:
       type: component
-#      repository: https://rep-service-b/service-b.git
       path: ../../service-b
-    postgresql:
-    shared-db-between-services:
-      root: true
-      name: postgresql
-    s3:
-      name: s3/ha
-  script:
-    type: helm
-    repository: file://../helm
-    build:
-      image: "__deployto-lookup: build.image"
-    shared-db: "__deployto-lookup: shared-db-between-services.ConnectionString"
-    s3: "__deployto-lookup: s3.ConnectionString"
+  #   db-a:
+  #     resource: postgresql
+  #   shared-db:
+  #     root: true
+  #     resource: postgresql
+  #     version: "1.1.1"
+  #     name: "postgresql-helm-ha"
+  # script:
+  #   type: helm
+  #   path: file://../helm
+  #   build:
+  #     image: "__deployto-lookup: build.image"
+  #   shared-db: "__deployto-lookup: shared-db-between-services.ConnectionString"
+  #   s3: "__deployto-lookup: s3.ConnectionString"

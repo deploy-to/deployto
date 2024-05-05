@@ -3,6 +3,7 @@ package deploy
 import (
 	"bytes"
 	"context"
+	"deployto/src/filesystem"
 	"deployto/src/types"
 	"encoding/json"
 	"net/url"
@@ -19,7 +20,7 @@ func init() {
 	RunScriptFuncImplementations["helm"] = Helm
 }
 
-func Helm(target *types.Target, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 	var outputBuffer bytes.Buffer
 	//set settings for helm
 	opt := &helmclient.KubeConfClientOptions{
