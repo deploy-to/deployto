@@ -4,12 +4,9 @@ import (
 	"context"
 	"deployto/src/filesystem"
 	"deployto/src/types"
-	"fmt"
-	"log"
 
-	"github.com/hashicorp/go-version"
-	"github.com/hashicorp/hc-install/product"
-	"github.com/hashicorp/hc-install/releases"
+	"github.com/rs/zerolog/log"
+
 	"github.com/hashicorp/terraform-exec/tfexec"
 )
 
@@ -19,32 +16,28 @@ func init() {
 
 func Terraform(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 
-	installer := &releases.ExactVersion{
-		Product: product.Terraform,
-		Version: version.Must(version.NewVersion("1.0.6")),
-	}
+	execPath := "/usr/local/bin/terraform"
 
-	execPath, err := installer.Install(context.Background())
+	tf, err := tfexec.NewTerraform(workdir, execPath)
 	if err != nil {
-		log.Fatalf("error installing Terraform: %s", err)
+		log.Error().Err(err).Msg("error running NewTerraformr")
+		return nil, err
 	}
 
-	workingDir := "/path/to/working/dir"
-	tf, err := tfexec.NewTerraform(workingDir, execPath)
+	plan, err := tf.Plan(context.Background())
 	if err != nil {
-		log.Fatalf("error running NewTerraform: %s", err)
+		log.Error().Err(err).Msg("error running Plan")
+		return nil, err
 	}
-
-	err = tf.Init(context.Background(), tfexec.Upgrade(true))
-	if err != nil {
-		log.Fatalf("error running Init: %s", err)
+	if plan {
+		err := tf.Apply(context.Background())
+		if err != nil {
+			log.Error().Err(err).Msg("error running Apply")
+			return nil, err
+		}
 	}
+	//state, err := tf.ShowStateFile(context.Background())
+	output["terraform"] = ""
 
-	state, err := tf.Show(context.Background())
-	if err != nil {
-		log.Fatalf("error running Show: %s", err)
-	}
-
-	fmt.Println(state.FormatVersion) // "0.1"
 	return
 }

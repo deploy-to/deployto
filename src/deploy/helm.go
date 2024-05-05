@@ -21,6 +21,8 @@ func init() {
 }
 
 func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+
+	//TODO добавить логику использвания workdir/repositoryFS/helm repository
 	var outputBuffer bytes.Buffer
 	//set settings for helm
 	opt := &helmclient.KubeConfClientOptions{
