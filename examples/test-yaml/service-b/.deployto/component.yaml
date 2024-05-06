@@ -6,22 +6,31 @@ spec:
   dependencies:
     # build:
     #   type: job
-    # shared-db-between-services:
-    #   root: true
-    #   resource: postgresql
     #  s3:
-    postgresql:
+    # postgresql:
+    #   type: helm
+    #   repository: https://charts.bitnami.com/bitnami
+    #   version:          "15.1.0"
+    #   fullnameOverride: postgresql-standalone
+    #   auth:
+    #     database:         servicea-db
+    #     username:         servicea-user
+    #     password:         HOrFk14CyX
+    #     postgresPassword": xxdsdsddsxxxx
+    shared-db-between-services:
       type: helm
-      repository: https://charts.bitnami.com/bitnami
-      name:             postgresql
-      version:          "15.1.0"
-      fullnameOverride: postgresql-standalone
+      root: true
+      repository: https://charts.bitnami.com/bitnami  # определяется в template
+      version:          "15.1.0"                      # определяется в template
+      fullnameOverride: "{{ .alias }}"   # локально "{{ .alias }}" , в яндексе, что получится
       auth:
-        database:         servicea-db
-        username:         servicea-user
-        password:         HOrFk14CyX
-        postgresPassword": xxdsdsddsxxxx
-        
+        database:         "{{ load | .alias  | rnd 12 34}}" # сохранять
+        username:         servicea-user  # сохранять, генериться из parent aleas, или rnd
+        password:         HOrFk14CyX     # сохранять, генериться rnd
+        postgresPassword": xxdsdsddsxxxx # сохранять, генериться из parent aleas, или rnd
+      outputMapping:
+        hostname: "{{ .context.fullnameOverride }}"
+        username: "{{ .output.auth.username }}"
   # script:
   #   type: helm
   #   repository: file://../helm

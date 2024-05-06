@@ -113,7 +113,7 @@ func IsDirExists(localPath string) bool {
 		return fi.IsDir()
 	}
 	if !os.IsNotExist(err) {
-		log.Info().Err(err).Str("path", localPath).Msg("Check dir exists")
+		log.Trace().Err(err).Str("path", localPath).Msg("Check dir exists")
 	}
 	return false
 }

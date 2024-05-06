@@ -20,18 +20,18 @@ func Component(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 
 	// COMPONENTS
 	comps := yaml.Get[types.Component](repositoryFS, repositoryFS.FS.Join(workdir, filesystem.DeploytoDirName))
-	for _, c := range comps {
-		cOutput, err := RunSingleComponent(target, aliases, rootValues, input, c)
+	for _, comp := range comps {
+		compOutput, err := RunSingleComponent(target, aliases, rootValues, input, comp)
 		if err != nil {
 			return nil, err
 		}
-		output[buildAlias(aliases)] = cOutput
+		output[buildAlias(aliases)] = compOutput
 	}
 
 	return output, err
 }
 
-func RunSingleComponent(target *types.Target, aliases []string, rootValues, input types.Values, c *types.Component) (output types.Values, err error) {
+func RunSingleComponent(target *types.Target, aliases []string, rootContext, input types.Values, c *types.Component) (output types.Values, err error) {
 	if len(aliases) == 0 { //is first component (application)
 		aliases = []string{c.Meta.Name}
 	}
@@ -60,15 +60,12 @@ func RunSingleComponent(target *types.Target, aliases []string, rootValues, inpu
 
 		dependencyOutput, err := RunScript(target, c.Status.Filesystem, filepath.Dir(c.Status.FileName),
 			dependencyAliases,
-			rootValues,
-			d, input)
+			d,
+			rootContext, input)
 		if err != nil {
 			l.Error().Err(err).Msg("RunScript error")
 		}
 		dependenciesOutput[alias] = dependencyOutput
-		if d.Root {
-			rootValues[alias] = dependencyOutput
-		}
 	}
 
 	if types.Exists(c.Spec, "script") {
@@ -77,8 +74,8 @@ func RunSingleComponent(target *types.Target, aliases []string, rootValues, inpu
 		scriptContext := types.MergeValues(dependenciesOutput, input)
 		output, err = RunScript(target, c.Status.Filesystem, filepath.Dir(c.Status.FileName),
 			aliases,
-			rootValues,
-			compScript, scriptContext)
+			compScript,
+			rootContext, scriptContext)
 		if err != nil {
 			l.Error().Err(err).Msg("RunScript error")
 		}

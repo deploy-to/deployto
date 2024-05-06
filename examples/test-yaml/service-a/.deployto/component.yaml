@@ -4,22 +4,35 @@ metadata:
   name: service-a
 spec:
   dependencies:
-    build:
-      type: job
+    # build:
+    #   type: job
     # service-b:
     #   type: component
     #   repository: git@github.com:deploy-to/deployto.git
     #   path: /examples/test-yaml/service-b
-    service-b-localpath:
-      type: component
-      path: ../../service-b
-  #   db-a:
-  #     resource: postgresql
-  #   shared-db:
-  #     root: true
-  #     resource: postgresql
-  #     version: "1.1.1"
-  #     name: "postgresql-helm-ha"
+    # service-b-localpath:
+    #   type: component
+    #   path: ../../service-b
+    # postgresql:
+    shared-db-between-services:
+      root: true
+      type: helm
+      name: postgresql                                # определяется в template
+      repository: https://charts.bitnami.com/bitnami  # определяется в template
+      version:          "15.1.0"                      # определяется в template
+
+      fullnameOverride: "{{ .alias }}"   # локально "{{ .alias }}" , в яндексе, что получится
+      auth:
+        database:         "{{ .alias }}" # сохранять
+        username:         servicea-user  # сохранять, генериться из parent aleas, или rnd
+        password:         HOrFk14CyX     # сохранять, генериться rnd
+        postgresPassword": xxdsdsddsxxxx # сохранять, генериться из parent aleas, или rnd
+      outputMapping:
+        hostname: "{{ .context.fullnameOverride }}"
+        database: "{{ .context.auth.database }}"
+        username: "{{ .context.auth.username }}"
+        password: "{{ .context.auth.password }}"
+
   # script:
   #   type: helm
   #   path: file://../helm
