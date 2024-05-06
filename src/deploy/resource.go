@@ -75,11 +75,13 @@ func tryGet(fs *filesystem.Filesystem, path string) *types.Component {
 	comps := yaml.GetFromFile[types.Component](fs, path)
 	if len(comps) == 0 {
 		log.Error().Str("path", path).Msg("file exists, but component not found")
+		return nil
 	}
 	if len(comps) > 1 {
 		log.Error().Str("path", path).Msg("only one component allowed")
+		return nil
 	}
-	return nil
+	return comps[0]
 }
 
 var TemplateRepositories cli.StringSlice //setup in cli.StringSliceFlag{ Name: "templateRepositories", Destination: &deploy.TemplateRepositories,

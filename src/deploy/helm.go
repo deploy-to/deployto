@@ -7,6 +7,8 @@ import (
 	"deployto/src/types"
 	"encoding/json"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -26,8 +28,8 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 	opt := &helmclient.KubeConfClientOptions{
 		Options: &helmclient.Options{
 			Namespace:        target.Spec.Namespace, // Change this to the namespace you wish to install the chart in.
-			RepositoryCache:  "/tmp/.helmcache",
-			RepositoryConfig: "/tmp/.helmrepo",
+			RepositoryCache:  filepath.Join(os.TempDir(), ".helmcache"),
+			RepositoryConfig: filepath.Join(os.TempDir(), ".helmrepo"),
 			Debug:            true,
 			Linting:          true, // Change this to false if you don't want linting.
 			DebugLog: func(format string, v ...interface{}) {

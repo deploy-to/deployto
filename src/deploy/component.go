@@ -31,9 +31,9 @@ func Component(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 	return output, err
 }
 
-func RunSingleComponent(target *types.Target, aliases []string, rootContext, input types.Values, c *types.Component) (output types.Values, err error) {
+func RunSingleComponent(target *types.Target, aliases []string, rootContext, input types.Values, comp *types.Component) (output types.Values, err error) {
 	if len(aliases) == 0 { //is first component (application)
-		aliases = []string{c.Meta.Name}
+		aliases = []string{comp.Meta.Name}
 	}
 
 	l := log.With().Strs("aliases", aliases).Logger()
@@ -41,9 +41,9 @@ func RunSingleComponent(target *types.Target, aliases []string, rootContext, inp
 
 	// зависимость git  выполняется всегда
 	l.Debug().Msg("Get commit hash and tags")
-	dependenciesOutput["git"] = gitclient.GetValues(c.Status.Filesystem, c.Status.FileName)
+	dependenciesOutput["git"] = gitclient.GetValues(comp.Status.Filesystem, comp.Status.FileName)
 
-	dependencies := types.Get(c.Spec, types.Values(nil), "dependencies")
+	dependencies := types.Get(comp.Spec, types.Values(nil), "dependencies")
 	for alias, dependencyAsMap := range dependencies {
 		d := types.DecodeScript(dependencyAsMap)
 		if d == nil {
@@ -58,7 +58,7 @@ func RunSingleComponent(target *types.Target, aliases []string, rootContext, inp
 			dependencyAliases = append(aliases, alias)
 		}
 
-		dependencyOutput, err := RunScript(target, c.Status.Filesystem, filepath.Dir(c.Status.FileName),
+		dependencyOutput, err := RunScript(target, comp.Status.Filesystem, filepath.Dir(comp.Status.FileName),
 			dependencyAliases,
 			d,
 			rootContext, input)
@@ -68,11 +68,11 @@ func RunSingleComponent(target *types.Target, aliases []string, rootContext, inp
 		dependenciesOutput[alias] = dependencyOutput
 	}
 
-	if types.Exists(c.Spec, "script") {
-		compScript := types.DecodeScript(types.Get(c.Spec, types.Values(nil), "script"))
+	if types.Exists(comp.Spec, "script") {
+		compScript := types.DecodeScript(types.Get(comp.Spec, types.Values(nil), "script"))
 
 		scriptContext := types.MergeValues(dependenciesOutput, input)
-		output, err = RunScript(target, c.Status.Filesystem, filepath.Dir(c.Status.FileName),
+		output, err = RunScript(target, comp.Status.Filesystem, filepath.Dir(comp.Status.FileName),
 			aliases,
 			compScript,
 			rootContext, scriptContext)

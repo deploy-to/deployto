@@ -1,7 +1,7 @@
 apiVersion: deployto.dev/v1beta1
 kind: Component
 metadata:
-  name: FullApplication
+  name: fullapplication
 spec:
   dependencies:
     #service-a:
@@ -11,7 +11,7 @@ spec:
     postgresql:
     db-a:
       resource: postgresql
-      version: 16.2
+      version: v16.2
       name: bitnami-15.1.0-standalone
     db-b:
       resource: postgresql
