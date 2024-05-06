@@ -27,8 +27,8 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 	if script.Values == nil {
 		script.Values = make(types.Values)
 	}
-	if _, ok := script.Values["name"]; !ok {
-		script.Values["name"] = aliases[len(aliases)-1]
+	if _, ok := script.Values["resource"]; !ok {
+		script.Values["resource"] = aliases[len(aliases)-1]
 	}
 
 	if script.Repository != "" {

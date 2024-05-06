@@ -1,0 +1,1 @@
+Application initialization templates are stored here

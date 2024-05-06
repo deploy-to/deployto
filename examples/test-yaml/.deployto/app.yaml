@@ -4,9 +4,17 @@ metadata:
   name: FullApplication
 spec:
   dependencies:
-    service-a:
-      type: component
-      root: true
-      path: ../service-a
+    #service-a:
+      # type: component
+      # root: true
+      # path: ../service-a
+    postgresql:
+    db-a:
+      resource: postgresql
+      version: 16.2
+      name: bitnami-15.1.0-standalone
+    db-b:
+      resource: postgresql
+
   # script:
   # TODO helm with ingress

@@ -1,18 +1,16 @@
-package src
+package cmd
 
 import (
-	"deployto/src/types"
 	"os"
 	"time"
 
-	"github.com/k0kubun/pp/v3"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
-func LogSetting(stg types.Settings) {
+func LogSetting(loglevel string, logformat string) {
 	//trace, debug, warn, info, fatal, panic, absent, disable
-	switch stg.Loglevel {
+	switch loglevel {
 	case "trace":
 		zerolog.SetGlobalLevel(zerolog.TraceLevel)
 	case "debug":
@@ -31,12 +29,10 @@ func LogSetting(stg types.Settings) {
 		zerolog.SetGlobalLevel(zerolog.Disabled)
 	}
 
-	switch stg.Logformat {
+	switch logformat {
 	case "pretty":
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	}
 
 	zerolog.TimeFieldFormat = time.DateTime
-
-	pp.Default.SetColoringEnabled(false)
 }
