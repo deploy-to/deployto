@@ -15,5 +15,7 @@ jobs:
         run: go get .
       - name: Build
         run: go build -v ./...
+      - name: terraformrc
+        run: cp .terraformrc ~/.terraformrc
       - name: Test with the Go CLI
         run: go test ./...
