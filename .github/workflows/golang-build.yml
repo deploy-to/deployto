@@ -18,7 +18,7 @@ jobs:
       - name: terraformrc
         run: cp .terraformrc ~/.terraformrc
       - name: Test with the Go CLI
-        run: go test ./...
+        run: go test -timeout 30m ./...
         env: 
           TF_VAR_YC_CLOUD_ID: ${{ secrets.TF_VAR_YC_CLOUD_ID }}
           TF_VAR_YC_FOLDER_ID: ${{ secrets.TF_VAR_YC_FOLDER_ID }}
