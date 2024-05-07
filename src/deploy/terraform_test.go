@@ -17,7 +17,10 @@ func TestTerraform(t *testing.T) {
 	path2 := "../../examples/terraform-yandex"
 	output, err = Terraform(nil, nil, path2, []string{"AAAAA"}, types.Values(nil), types.Values(nil))
 	if err != nil {
-		TerraformDestroy(nil, nil, path2, []string{"AAAAA"}, types.Values(nil), types.Values(nil))
+		_, err = TerraformDestroy(nil, nil, path2, []string{"AAAAA"}, types.Values(nil), types.Values(nil))
+		if err != nil {
+			t.Fatalf("Terraform destroy error %v", err)
+		}
 		t.Fatalf("Terraform error %v", err)
 	}
 	t.Logf("Terraform output is = %v", output)
