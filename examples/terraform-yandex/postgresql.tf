@@ -8,11 +8,11 @@ locals {
   zone_a_v4_cidr_blocks = "10.1.0.0/16" # Set the CIDR block for subnet in the ru-central1-a availability zone.
   zone_b_v4_cidr_blocks = "10.2.0.0/16" # Set the CIDR block for subnet in the ru-central1-b availability zone.
   zone_c_v4_cidr_blocks = "10.3.0.0/16" # Set the CIDR block for subnet in the ru-central1-c availability zone.
-  cluster_name          = ""            # Set a PostgreSQL 1C cluster name.
-  pg_version            = ""            # Set a PostgreSQL 1C version.
-  db_name               = ""            # Set a database name.
-  username              = ""            # Set a user name.
-  password              = ""            # Set a user password.
+  cluster_name          = "db-cluster"            # Set a PostgreSQL 1C cluster name.
+  pg_version            = "10"            # Set a PostgreSQL 1C version.
+  db_name               = "db-servicea"            # Set a database name.
+  username              = "servicea-user"            # Set a user name.
+  password              = "servicea-password"            # Set a user password.
 }
 
 resource "yandex_vpc_network" "postgresql-1c-network" {

@@ -7,8 +7,6 @@ require (
 	github.com/charmbracelet/huh v0.3.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0
-	github.com/hashicorp/go-version v1.6.0
-	github.com/hashicorp/hc-install v0.6.4
 	github.com/hashicorp/terraform-exec v0.20.0
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/lithammer/shortuuid/v3 v3.0.7
@@ -94,8 +92,9 @@ require (
 	github.com/gosuri/uitable v0.0.4 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/go-version v1.6.0 // indirect
+	github.com/hashicorp/hc-install v0.6.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/terraform-json v0.19.0 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
