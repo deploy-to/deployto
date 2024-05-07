@@ -5,7 +5,7 @@ import (
 	"deployto/src/filesystem"
 	"deployto/src/types"
 	"errors"
-	"text/template"
+	"html/template"
 
 	"github.com/rs/zerolog/log"
 )
@@ -78,8 +78,8 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 	return nil, errors.New("RUNSCRIPT FUNCTION NOT FOUND")
 }
 
-func prepareInput(values, rootContext, parentContext types.Values, aliases []string) (types.Values, error) {
-	fullContext := types.MergeValues(
+func mergeContext(rootContext, parentContext types.Values, aliases []string) map[string]any {
+	return types.MergeValues(
 		rootContext,
 		parentContext,
 		types.Values{
@@ -87,6 +87,10 @@ func prepareInput(values, rootContext, parentContext types.Values, aliases []str
 			"alias":   buildAlias(aliases),
 		},
 	)
+}
+
+func prepareInput(values, rootContext, parentContext types.Values, aliases []string) (types.Values, error) {
+	fullContext := mergeContext(rootContext, parentContext, aliases)
 	templated, err := templating(values, fullContext)
 	if err != nil {
 		log.Error().Err(err).Strs("aliases", aliases).Msg("prepareValues error")
@@ -118,21 +122,37 @@ func templating(values, context types.Values) (types.Values, error) {
 			}
 			result[k] = subResult
 		case string:
-			t, err := template.New("letter").Parse(vTyped)
+			res, err := templatingString(vTyped, context)
 			if err != nil {
-				log.Error().Err(err).Str("template", vTyped).Msg("Template parse error")
+				log.Error().Err(err).Str("key", k).Str("template", vTyped).Msg("Templating error")
 				return nil, err
 			}
-			buf := new(bytes.Buffer)
-			err = t.Execute(buf, context)
-			if err != nil {
-				log.Error().Err(err).Str("key", k).Str("template", vTyped).Msg("Template execute with scriptContext error")
-				return nil, err
-			}
-			result[k] = buf.String()
+			result[k] = res
 		default:
 			result[k] = v
 		}
 	}
 	return result, nil
+}
+
+var funcMap = template.FuncMap{
+	"inc": func(i int) int { return i + 1 },
+	"dec": func(i int) int { return i + 1 },
+	"add": func(i1 int, i2 int) int { return i1 + i2 },
+	"sub": func(i1 int, i2 int) int { return i1 - i2 },
+}
+
+func templatingString(templ string, context types.Values) (string, error) {
+	t, err := template.New("letter").Funcs(funcMap).Parse(templ)
+	if err != nil {
+		log.Error().Err(err).Str("template", templ).Msg("Template parse error")
+		return "nil", err
+	}
+	buf := new(bytes.Buffer)
+	err = t.Execute(buf, context)
+	if err != nil {
+		log.Error().Err(err).Str("template", templ).Msg("Template execute with scriptContext error")
+		return "", err
+	}
+	return buf.String(), nil
 }

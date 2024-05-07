@@ -1,13 +1,12 @@
 apiVersion: deployto.dev/v1beta1
 kind: Component
 metadata:
-  name: fullapplication
+  name: example01
 spec:
   dependencies:
-    postgresql:
     ci:
-      type: job      
+      type: job
+    postgresql:
   script:
     type: helm
     path: file://../helm
-

@@ -1,5 +1,5 @@
 apiVersion: deployto.dev/v1beta1
-kind: Job
+kind: Workflow
 metadata:
   name: 'Link Checker: All English'
 spec:

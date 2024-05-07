@@ -78,7 +78,7 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 	version := types.Get(input, aliases[len(aliases)-1], "version")
 	// put settings for chart and put values
 	chartSpec := helmclient.ChartSpec{
-		ReleaseName:     kind,
+		ReleaseName:     buildAlias(aliases),
 		ChartName:       chartRepo.Name + "/" + kind,
 		Version:         version,
 		ValuesYaml:      string(valuesFile),

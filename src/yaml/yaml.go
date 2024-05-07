@@ -3,7 +3,6 @@ package yaml
 import (
 	"deployto/src/filesystem"
 	"deployto/src/types"
-	"fmt"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -16,9 +15,6 @@ func Get[T types.Component | types.Environment | types.Target | types.Job](fs *f
 		log.Error().Err(err).Msg("ReadDir error")
 	}
 	for _, file := range files {
-		// if file.IsDir() && file.Name() == filesystem.DeploytoDirName {
-		// 	result = append(result, Get[T](fs, file.Name())...)
-		// }
 		if !file.IsDir() && strings.HasSuffix(strings.ToLower(file.Name()), ".yaml") {
 			result = append(result, GetFromFile[T](fs, fs.FS.Join(deploytoDir, file.Name()))...)
 		}
@@ -51,76 +47,36 @@ func GetFromFile[T types.Component | types.Environment | types.Target | types.Jo
 		case *types.Component:
 			itemTyped.Base.Status.Filesystem = fs
 			itemTyped.Base.Status.FileName = fileName
-			if itemTyped.Kind == "Component" {
+			if strings.ToLower(itemTyped.Kind) == "component" {
 				result = append(result, item.(*T))
 			}
 		case *types.Environment:
 			itemTyped.Base.Status.Filesystem = fs
 			itemTyped.Base.Status.FileName = fileName
-			if itemTyped.Kind == "Environment" {
+			if strings.ToLower(itemTyped.Kind) == "environment" {
 				result = append(result, item.(*T))
 			}
 		case *types.Target:
 			itemTyped.Base.Status.Filesystem = fs
 			itemTyped.Base.Status.FileName = fileName
-			if itemTyped.Kind == "Target" {
+			if strings.ToLower(itemTyped.Kind) == "target" {
 				result = append(result, item.(*T))
 			}
 		case *types.Job:
-			if itemTyped.Kind == "Job" {
+			if strings.ToLower(itemTyped.Kind) == "job" {
 				result = append(result, item.(*T))
 			}
 		case *types.Service:
-			if itemTyped.Kind == "Service" {
+			if strings.ToLower(itemTyped.Kind) == "service" {
 				result = append(result, item.(*T))
 			}
 		case *types.Ingress:
-			if itemTyped.Kind == "Ingress" {
+			if strings.ToLower(itemTyped.Kind) == "Ingress" {
 				result = append(result, item.(*T))
 			}
 		default:
 			log.Error().Type("type", item).Msg("yaml crd type not supported")
 		}
-	}
-	return
-}
-
-func GetBytes[T types.Service | types.Ingress](yamlb []byte) (result []*T) {
-	var yl map[string]interface{}
-	err := yaml.Unmarshal(yamlb, &yl)
-	if err != nil {
-		log.Error().Err(err).Str("path", "yaml").Msg("Parse yaml error")
-	}
-
-	var item any = new(T)
-	switch itemTyped := item.(type) {
-	case *types.Ingress:
-		if itemTyped.Kind == "Ingress" {
-			result = append(result, item.(*T))
-		}
-	case *types.Service:
-		if itemTyped.Kind == "Service" {
-			result = append(result, item.(*T))
-		}
-	default:
-		log.Error().Type("type", item).Msg("yaml crd type not supported")
-	}
-	return
-}
-
-func GetBytes2(yamlb []byte) (services []types.Service, ingresses []types.Ingress) {
-
-	// Convert Kubernetes objects to YAML
-	err := yaml.Unmarshal(yamlb, &services)
-	if err != nil {
-		fmt.Println("Error converting services to YAML:", err)
-		return
-	}
-
-	err = yaml.Unmarshal(yamlb, &ingresses)
-	if err != nil {
-		fmt.Println("Error converting ingresses to YAML:", err)
-		return
 	}
 	return
 }

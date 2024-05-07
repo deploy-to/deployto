@@ -18,7 +18,7 @@ type Script = struct {
 func DecodeScript(values any) (script *Script) {
 	if values == nil {
 		log.Info().Msg("DecodeScript - input values is nil")
-		return &Script{}
+		return nil
 	}
 	script = &Script{}
 	err := mapstructure.Decode(values, script)

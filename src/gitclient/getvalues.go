@@ -23,7 +23,7 @@ func GetValues(fs *filesystem.Filesystem, path string) (values types.Values) {
 	}
 
 	// set default result
-	dirtyPostfix := "+dirty.uuid" + shortuuid.New()
+	dirtyPostfix := "-dirty.uuid" + shortuuid.New()
 	values["Commit"] = "NO_GIT" + dirtyPostfix
 	values["CommitShort"] = "NO_GIT" + dirtyPostfix
 

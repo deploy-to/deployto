@@ -5,7 +5,7 @@ metadata:
 spec:
   dependencies:
     # build:
-    #   type: job
+    #   type: workflow
     #  s3:
     # postgresql:
     #   type: helm
