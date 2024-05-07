@@ -15,9 +15,14 @@ func TestTerraform(t *testing.T) {
 	t.Logf("Terraform output is = %v", output)
 
 	path2 := "/Users/myoffice/Documents/deployto/examples/terraform-yandex"
-	output, err = TerraformTest(nil, nil, path2, []string{"AAAAA"}, types.Values(nil), types.Values(nil))
+	output, err = Terraform(nil, nil, path2, []string{"AAAAA"}, types.Values(nil), types.Values(nil))
 	if err != nil {
 		t.Fatalf("Terraform error %v", err)
 	}
 	t.Logf("Terraform output is = %v", output)
+	output, err = TerraformDestroy(nil, nil, path2, []string{"AAAAA"}, types.Values(nil), types.Values(nil))
+	if err != nil {
+		t.Fatalf("Terraform destroy error %v", err)
+	}
+	t.Logf("Terraform destroy output is = %v", output)
 }

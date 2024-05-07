@@ -62,7 +62,7 @@ func Terraform(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 	return scriptOutput, nil
 }
 
-func TerraformTest(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func TerraformDestroy(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
 
 	//TODO find terraform exec
 	execPath := "/usr/local/bin/terraform"
@@ -82,18 +82,6 @@ func TerraformTest(target *types.Target, repositoryFS *filesystem.Filesystem, wo
 		return nil, err
 	}
 
-	plan, err := tf.Plan(context.Background())
-	if err != nil {
-		log.Error().Err(err).Msg("error running Plan")
-		return nil, err
-	}
-	if plan {
-		err := tf.Apply(context.Background())
-		if err != nil {
-			log.Error().Err(err).Msg("error running Apply")
-			return nil, err
-		}
-	}
 	// read state file
 	state, err := tf.Show(context.Background())
 	if err != nil {
