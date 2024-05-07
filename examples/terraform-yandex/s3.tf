@@ -23,11 +23,11 @@ resource "yandex_storage_bucket" "test" {
   bucket     = "deployto"
 }
 
+
 locals {
   s3bucket = yandex_storage_bucket.test.bucket
   s3accesskey = yandex_iam_service_account_static_access_key.sa-static-key.access_key
   s3secretkey = yandex_iam_service_account_static_access_key.sa-static-key.secret_key
-  s3uri = "s3://${yandex_storage_bucket.test.website_domain}/${yandex_storage_bucket.test.website_endpoint}"
 }
 
 output "s3bucket" {
@@ -45,5 +45,6 @@ output "s3secretkey" {
 }
 
 output "s3uri" {
-  value = local.s3uri
+  value = yandex_storage_bucket.test
+  sensitive = true
 }

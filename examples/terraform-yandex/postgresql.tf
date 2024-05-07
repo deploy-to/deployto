@@ -1,14 +1,14 @@
 resource "yandex_mdb_postgresql_cluster" "postgresql-single" {
   name        = "test"
   environment = "PRESTABLE"
-  network_id  = yandex_vpc_network.default.id
+  network_id  = data.yandex_vpc_network.default.id
 
   config {
     version = 12
     resources {
       resource_preset_id = "s2.micro"
       disk_type_id       = "network-ssd"
-      disk_size          = 5
+      disk_size          = 20
     }
     postgresql_config = {
       max_connections                   = 395
@@ -80,5 +80,20 @@ output "dbname" {
 
 output "dburi" {
   value = local.dburi
+  sensitive = true
+}
+
+output "db" {
+  value = yandex_mdb_postgresql_database.foo
+  sensitive = true
+}
+
+output "pgcluster" {
+  value = yandex_mdb_postgresql_cluster.postgresql-single
+  sensitive = true
+}
+
+output "pguser" {
+  value = yandex_mdb_postgresql_user.test
   sensitive = true
 }

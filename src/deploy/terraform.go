@@ -82,10 +82,17 @@ func TerraformTest(target *types.Target, repositoryFS *filesystem.Filesystem, wo
 		return nil, err
 	}
 
-	err = tf.Test(context.Background(), writer)
+	plan, err := tf.Plan(context.Background())
 	if err != nil {
 		log.Error().Err(err).Msg("error running Plan")
 		return nil, err
+	}
+	if plan {
+		err := tf.Apply(context.Background())
+		if err != nil {
+			log.Error().Err(err).Msg("error running Apply")
+			return nil, err
+		}
 	}
 	// read state file
 	state, err := tf.Show(context.Background())
