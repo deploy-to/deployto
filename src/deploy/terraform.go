@@ -76,26 +76,11 @@ func TerraformDestroy(target *types.Target, repositoryFS *filesystem.Filesystem,
 	writer := bufio.NewWriter(f)
 	tf.SetStdout(writer)
 	tf.SetStderr(writer)
-	err = tf.Init(context.Background(), tfexec.Upgrade(true))
-	if err != nil {
-		log.Error().Err(err).Msg("error running Init")
-		return nil, err
-	}
-
-	// read state file
-	state, err := tf.Show(context.Background())
-	if err != nil {
-		log.Error().Err(err).Msg("error running show state")
-		return nil, err
-	}
-	scriptOutput := make(types.Values)
-	// format https://developer.hashicorp.com/terraform/internals/json-format#state-representation
-	scriptOutput["state"] = state.Values
 
 	err = tf.Destroy(context.Background())
 	if err != nil {
 		log.Error().Err(err).Msg("error running destory")
 		return nil, err
 	}
-	return scriptOutput, nil
+	return nil, nil
 }
