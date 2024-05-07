@@ -19,3 +19,7 @@ jobs:
         run: cp .terraformrc ~/.terraformrc
       - name: Test with the Go CLI
         run: go test ./...
+        env: 
+          TF_VAR_YC_CLOUD_ID: ${{ secrets.TF_VAR_YC_CLOUD_ID }}
+          TF_VAR_YC_FOLDER_ID: ${{ secrets.TF_VAR_YC_FOLDER_ID }}
+          TF_VAR_YC_TOKEN: ${{ secrets.TF_VAR_YC_TOKEN }}
