@@ -1,18 +1,19 @@
 
 
-variable "cloud_id" {
+variable "yc_cloud_id" {
   description = ""
   type        = string
 }
 
-variable "folder_id" {
+variable "yc_folder_id" {
   description = ""
   type        = string
 }
 
-variable "token" {
+variable "yc_token" {
   description = "token"
   type        = string
+  sensitive = true
 }
 
 variable "zone" {
@@ -31,7 +32,7 @@ terraform {
 
 provider "yandex" {
   zone = var.zone
-  token     = var.token
-  cloud_id  = var.cloud_id
-  folder_id = var.folder_id
+  token     = var.yc_token
+  cloud_id  = var.yc_cloud_id
+  folder_id = var.yc_folder_id
 }
