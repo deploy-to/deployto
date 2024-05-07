@@ -13,7 +13,7 @@ func TestTerraform(t *testing.T) {
 		t.Fatalf("Terraform error %v", err)
 	}
 	t.Logf("Terraform output is = %v", output)
-
+	// terraform yandex check
 	path2 := "/Users/myoffice/Documents/deployto/examples/terraform-yandex"
 	output, err = Terraform(nil, nil, path2, []string{"AAAAA"}, types.Values(nil), types.Values(nil))
 	if err != nil {
