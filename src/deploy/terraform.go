@@ -97,5 +97,10 @@ func TerraformTest(target *types.Target, repositoryFS *filesystem.Filesystem, wo
 	// format https://developer.hashicorp.com/terraform/internals/json-format#state-representation
 	scriptOutput["state"] = state.Values
 
+	err = tf.Destroy(context.Background())
+	if err != nil {
+		log.Error().Err(err).Msg("error running destory")
+		return nil, err
+	}
 	return scriptOutput, nil
 }
