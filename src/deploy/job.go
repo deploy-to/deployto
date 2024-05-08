@@ -32,14 +32,14 @@ func JobScript(target *types.Target, fs *filesystem.Filesystem, workdir string, 
 	jobs := yaml.Get[types.Job](fs, fs.FS.Join(workdir, ""))
 	for _, job := range jobs {
 		if job.Meta.Name == resource {
-			return runJob(job, aliases, context)
+			return runJob(fs, workdir, job, aliases, context)
 		}
 	}
 	log.Error().Str("jobName", resource).Msg("job not found")
 	return nil, errors.New("job not found")
 }
 
-func runJob(job *types.Job, aliases []string, jobContext types.Values) (types.Values, error) {
+func runJob(fs *filesystem.Filesystem, workdir string, job *types.Job, aliases []string, jobContext types.Values) (types.Values, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Minute) //TODO timeout to job file? or to cmg.Flags?
 	defer cancel()
 
@@ -82,6 +82,7 @@ func runJob(job *types.Job, aliases []string, jobContext types.Values) (types.Va
 				stderr := new(bytes.Buffer)
 
 				command := exec.CommandContext(ctx, "bash", "-c", stepLine)
+				command.Dir = filepath.Join(fs.LocalPath, workdir)
 				command.Env = append(env, "DEPLOYTO_OUTPUT="+stepOutputFile)
 				command.Stderr = stderr
 				command.Stdout = stdout
