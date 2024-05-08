@@ -7,15 +7,18 @@ import (
 
 type Dependency = Script
 type Script = struct {
-	Type   string
-	Root   bool
-	Values Values `mapstructure:",remain"` //Values хранятся на том же уровне, что и Type, Root
+	Type          string
+	Repository    string
+	Path          string
+	Root          bool
+	OutputMapping Values
+	Values        Values `mapstructure:",remain"` //Values хранятся на том же уровне, что и Type, Root
 }
 
 func DecodeScript(values any) (script *Script) {
 	if values == nil {
 		log.Info().Msg("DecodeScript - input values is nil")
-		return &Script{}
+		return nil
 	}
 	script = &Script{}
 	err := mapstructure.Decode(values, script)

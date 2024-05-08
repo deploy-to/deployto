@@ -4,5 +4,6 @@ metadata:
   name: postgresql
 spec:
   script:
-    type: component
-    path: ./1.1.1/default.yaml
+    resource: postgresql
+    version: v16.2
+    name: bitnami-15.1.0-standalone

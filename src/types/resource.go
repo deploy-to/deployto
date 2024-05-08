@@ -5,23 +5,23 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type TemplateArg = struct {
+type ResourceArg = struct {
 	Resource string
 	Version  string
 	Name     string
 	Values   Values `mapstructure:",remain"`
 }
 
-func DecodeTemplateArg(values any) (templateArg *TemplateArg) {
-	templateArg = &TemplateArg{}
+func DecodeResourceArg(values any) (resourceArg *ResourceArg) {
+	resourceArg = &ResourceArg{}
 	if values == nil {
 		log.Info().Msg("DecodeTemplate - input values is nil")
-		return templateArg
+		return resourceArg
 	}
-	err := mapstructure.Decode(values, templateArg)
+	err := mapstructure.Decode(values, resourceArg)
 	if err != nil {
 		log.Error().Err(err).Msg("DecodeScript error")
 		return nil
 	}
-	return templateArg
+	return resourceArg
 }

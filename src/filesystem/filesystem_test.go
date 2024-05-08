@@ -16,7 +16,7 @@ func TestGetFilesystem(t *testing.T) {
 	err = os.WriteFile(filepath.Join(tmpDir, "data.txt"), []byte("test"), 0644)
 	checkIfError(t, err)
 
-	fs := GetFilesystem("file://" + tmpDir)
+	fs := Get("file://" + tmpDir)
 
 	if fs.URI != "file://"+tmpDir {
 		t.Errorf("BaseDir has changed: %s", fs.URI)
@@ -49,7 +49,7 @@ func TestGetGitRootFilesystem(t *testing.T) {
 	}()
 
 	//Check no git
-	tmpFS := GetFilesystem("file://" + tmpDir)
+	tmpFS := Get("file://" + tmpDir)
 	result := GetGitRootFilesystem(tmpFS, "/")
 	if result != nil {
 		t.Errorf("if git is not initialized, I expect the nil result")
@@ -81,7 +81,7 @@ func TestGetGitRootFilesystem(t *testing.T) {
 	}
 
 	//Check root git path from sub sub sub filesystem
-	subsubsubFS := GetFilesystem("file://" + filepath.Join(tmpDir, subsubsubPath))
+	subsubsubFS := Get("file://" + filepath.Join(tmpDir, subsubsubPath))
 	result = GetGitRootFilesystem(subsubsubFS, "/")
 	if result == nil || result.URI != "file://"+filepath.Join(tmpDir, "A") {
 		t.Errorf("wait same BaseDir, get: %s", result.URI)

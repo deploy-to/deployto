@@ -59,9 +59,9 @@ func MergeValues(values ...Values) Values {
 	}
 	for i := 1; i < len(values); i++ {
 		for k, v := range values[i] {
-			if v, ok := v.(map[string]interface{}); ok {
+			if v, ok := v.(Values); ok {
 				if bv, ok := result[k]; ok {
-					if bv, ok := bv.(map[string]interface{}); ok {
+					if bv, ok := bv.(Values); ok {
 						result[k] = MergeValues(bv, v)
 						continue
 					}

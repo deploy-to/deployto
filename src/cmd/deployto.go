@@ -26,7 +26,7 @@ func Deployto(cCtx *cli.Context) error {
 		return err
 	}
 
-	fs := filesystem.GetDeploytoRootFilesystem(filesystem.GetFilesystem("file://"+path), "/")
+	fs := filesystem.GetDeploytoRootFilesystem(filesystem.Get("file://"+path), "/")
 	if fs == nil {
 		log.Error().Msg("components dir (.deployto) not found")
 		return errors.New("components dir (.deployto) not found")
@@ -59,19 +59,25 @@ func Deployto(cCtx *cli.Context) error {
 	log.Debug().Int("len(targets)", len(targets)).Msg("Targets found")
 
 	log.Info().Str("file", environment.Base.Status.FileName).Str("name", environment.Base.Meta.Name).Msg("Deploy environment")
-	for _, t := range targets {
-		log.Info().Str("file", t.Base.Status.FileName).Str("name", t.Base.Meta.Name).Msg("Deploy target")
+	for _, target := range targets {
+		log.Info().Str("file", target.Base.Status.FileName).Str("name", target.Base.Meta.Name).Msg("Deploy target")
 
 		rootValues := make(types.Values)
+		context := types.Values{
+			"environment": environment.Base.Meta.Name,
+			"target":      target.Base.Meta.Name,
+		}
 		//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
-		_, e := deploy.Component(t,
+		release, e := deploy.Component(target,
 			fs, "/",
 			nil,
-			rootValues, types.Values(nil))
+			rootValues, context)
 		if e != nil {
 			log.Error().Err(e).Msg("Component deploy error")
 			err = errors.Join(err, e)
 		}
+		//TODO Save release
+		log.Debug().Any("release", release).Msg("Component deploy result")
 
 		//TODO Run target script (move this logic to src/deploy/)
 	}

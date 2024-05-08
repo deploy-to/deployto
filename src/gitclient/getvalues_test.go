@@ -30,10 +30,10 @@ func TestGetValues_GeneralChecks(t *testing.T) {
 	if !strings.HasPrefix(output["CommitShort"].(string), "NO_GIT") {
 		t.Errorf("git just init: prefix error: GetValues()[CommitShort] = %v, want %v", output, "NO_GIT")
 	}
-	if !strings.Contains(output["Commit"].(string), "+dirty.uuid") {
+	if !strings.Contains(output["Commit"].(string), "-dirty.uuid") {
 		t.Errorf("git just init: dirty mark not exists: GetValues()[CommitShort] = %v", output)
 	}
-	if !strings.Contains(output["CommitShort"].(string), "+dirty.uuid") {
+	if !strings.Contains(output["CommitShort"].(string), "-dirty.uuid") {
 		t.Errorf("git just init: dirty mark not exists: GetValues()[CommitShort] = %v", output)
 	}
 
@@ -72,13 +72,13 @@ func TestGetValues_GeneralChecks(t *testing.T) {
 	if !strings.HasPrefix(output["Tag"].(string), "v1.0.1") {
 		t.Errorf("dirty git: prefix error: GetValues()[Tag] = %v, want %v", output, "v1.0.1")
 	}
-	if !strings.Contains(output["Commit"].(string), "+dirty.uuid") {
+	if !strings.Contains(output["Commit"].(string), "-dirty.uuid") {
 		t.Errorf("dirty git: dirty mark not exists: GetValues()[CommitShort] = %v", output)
 	}
-	if !strings.Contains(output["CommitShort"].(string), "+dirty.uuid") {
+	if !strings.Contains(output["CommitShort"].(string), "-dirty.uuid") {
 		t.Errorf("dirty git: dirty mark not exists: GetValues()[CommitShort] = %v", output)
 	}
-	if !strings.Contains(output["Tag"].(string), "+dirty.uuid") {
+	if !strings.Contains(output["Tag"].(string), "-dirty.uuid") {
 		t.Errorf("dirty git: dirty mark not exists: GetValues()[Tag] = %v", output)
 	}
 
@@ -140,7 +140,7 @@ func prepareGit(t *testing.T) (string, *filesystem.Filesystem, *git.Repository, 
 	checkIfError(t, err)
 	t.Logf("tmp dir: %s", tmpDir)
 
-	fs := filesystem.GetFilesystem("file://" + tmpDir)
+	fs := filesystem.Get("file://" + tmpDir)
 
 	//git init
 	r, err := git.PlainInit(tmpDir, false)

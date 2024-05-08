@@ -15,36 +15,41 @@ import (
 func init() {
 	RunScriptFuncImplementations["component"] = Component
 }
-func Component(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Component(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, context types.Values) (output types.Values, err error) {
+	if context == nil {
+		log.Error().Msg("want context")
+		return nil, errors.New("WANT CONTEXT")
+	}
 	output = make(types.Values)
 
 	// COMPONENTS
 	comps := yaml.Get[types.Component](repositoryFS, repositoryFS.FS.Join(workdir, filesystem.DeploytoDirName))
-	for _, c := range comps {
-		cOutput, err := RunSingleComponent(target, aliases, rootValues, input, c)
+	for _, comp := range comps {
+		compOutput, err := RunSingleComponent(target, aliases, rootValues, context, comp)
 		if err != nil {
 			return nil, err
 		}
-		output[buildAlias(aliases)] = cOutput
+		output[buildAlias(aliases)] = compOutput
 	}
 
 	return output, err
 }
 
-func RunSingleComponent(target *types.Target, aliases []string, rootValues, input types.Values, c *types.Component) (types.Values, error) {
+func RunSingleComponent(target *types.Target, aliases []string, rootContext, context types.Values, comp *types.Component) (output types.Values, err error) {
 	if len(aliases) == 0 { //is first component (application)
-		aliases = []string{c.Meta.Name}
+		aliases = []string{comp.Meta.Name}
 	}
-	compScript := types.DecodeScript(types.Get(c.Spec, types.Values(nil), "script"))
 
 	l := log.With().Strs("aliases", aliases).Logger()
 	dependenciesOutput := make(types.Values)
 
 	// зависимость git  выполняется всегда
 	l.Debug().Msg("Get commit hash and tags")
-	dependenciesOutput["git"] = gitclient.GetValues(c.Status.Filesystem, c.Status.FileName)
+	context["git"] = gitclient.GetValues(comp.Status.Filesystem, filepath.Dir(comp.Status.FileName))
+	context["component"] = aliases[len(aliases)-1]
+	context["alias"] = buildAlias(aliases)
 
-	dependencies := types.Get(c.Spec, map[string]any(nil), "dependencies")
+	dependencies := types.Get(comp.Spec, types.Values(nil), "dependencies")
 	for alias, dependencyAsMap := range dependencies {
 		d := types.DecodeScript(dependencyAsMap)
 		if d == nil {
@@ -59,32 +64,33 @@ func RunSingleComponent(target *types.Target, aliases []string, rootValues, inpu
 			dependencyAliases = append(aliases, alias)
 		}
 
-		dependencyOutput, e := RunScript(target, c.Status.Filesystem, filepath.Dir(c.Status.FileName),
+		dependencyOutput, err := RunScript(target, comp.Status.Filesystem, filepath.Dir(comp.Status.FileName),
 			dependencyAliases,
-			rootValues,
-			d, input)
-		if e != nil {
-			l.Error().Err(e).Msg("RunScript error")
+			d,
+			rootContext, context)
+		if err != nil {
+			l.Error().Err(err).Msg("RunScript error")
 		}
 		dependenciesOutput[alias] = dependencyOutput
-		if d.Root {
-			rootValues[alias] = dependencyOutput
-		}
 	}
 
-	scriptContext := types.MergeValues(dependenciesOutput, input)
-	scriptOutput, e := RunScript(target, c.Status.Filesystem, filepath.Dir(c.Status.FileName),
-		aliases,
-		rootValues,
-		compScript, scriptContext)
-	if e != nil {
-		l.Error().Err(e).Msg("RunScript error")
+	if types.Exists(comp.Spec, "script") {
+		compScript := types.DecodeScript(types.Get(comp.Spec, types.Values(nil), "script"))
+
+		scriptContext := types.MergeValues(dependenciesOutput, context)
+		output, err = RunScript(target, comp.Status.Filesystem, filepath.Dir(comp.Status.FileName),
+			aliases,
+			compScript,
+			rootContext, scriptContext)
+		if err != nil {
+			l.Error().Err(err).Msg("RunScript error")
+		}
 	}
-	if scriptOutput == nil {
-		scriptOutput = make(types.Values)
+	if output == nil {
+		output = make(types.Values)
 	}
-	scriptOutput["dependencies"] = dependenciesOutput
-	return scriptOutput, nil
+	output["dependencies"] = dependenciesOutput
+	return output, nil
 }
 
 func buildAlias(names []string) string {

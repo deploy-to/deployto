@@ -7,6 +7,8 @@ import (
 	"deployto/src/types"
 	"encoding/json"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -28,9 +30,9 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 	//set settings for helm
 	opt := &helmclient.KubeConfClientOptions{
 		Options: &helmclient.Options{
-			Namespace:        target.Namespace, // Change this to the namespace you wish to install the chart in.
-			RepositoryCache:  "/tmp/.helmcache",
-			RepositoryConfig: "/tmp/.helmrepo",
+			Namespace:        target.Spec.Namespace, // Change this to the namespace you wish to install the chart in.
+			RepositoryCache:  filepath.Join(os.TempDir(), ".helmcache"),
+			RepositoryConfig: filepath.Join(os.TempDir(), ".helmrepo"),
 			Debug:            true,
 			Linting:          true, // Change this to false if you don't want linting.
 			DebugLog: func(format string, v ...interface{}) {
@@ -39,7 +41,7 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 			Output: &outputBuffer, // Not mandatory, leave open for default os.Stdout
 		},
 		KubeContext: "",
-		KubeConfig:  target.Kubeconfig,
+		KubeConfig:  target.LoadKubeconfig(),
 	}
 
 	helmClient, err := helmclient.NewClientFromKubeConf(opt)
@@ -79,12 +81,12 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 	version := types.Get(input, aliases[len(aliases)-1], "version")
 	// put settings for chart and put values
 	chartSpec := helmclient.ChartSpec{
-		ReleaseName:     kind,
+		ReleaseName:     buildAlias(aliases),
 		ChartName:       chartRepo.Name + "/" + kind,
 		Version:         version,
 		ValuesYaml:      string(valuesFile),
 		CreateNamespace: true,
-		Namespace:       target.Namespace,
+		Namespace:       target.Spec.Namespace,
 		UpgradeCRDs:     true,
 		Wait:            true,
 		Timeout:         time.Duration(5 * float64(time.Minute)),

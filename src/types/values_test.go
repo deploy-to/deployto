@@ -105,3 +105,27 @@ func TestExists(t *testing.T) {
 		})
 	}
 }
+
+func TestMergeValues(t *testing.T) {
+	tests := []struct {
+		name   string
+		values []Values
+		want   Values
+	}{
+		{
+			name: "two Values",
+			values: []Values{
+				{"A": "A", "C": "first"},
+				{"B": "B", "C": "second"},
+			},
+			want: Values{"A": "A", "B": "B", "C": "second"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MergeValues(tt.values...); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MergeValues() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

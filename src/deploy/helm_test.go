@@ -5,9 +5,6 @@ package deploy
 
 import (
 	"deployto/src/types"
-	"os"
-	"os/user"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -122,24 +119,13 @@ func TestK8SIntegrationHelm(t *testing.T) {
 	}
 }
 
-func getTarget(t *testing.T) *types.Target {
-	usr, err := user.Current()
-	if err != nil {
-		t.Fatalf("i'm a groot")
-	}
-	kubeConfigFilename := filepath.Join(usr.HomeDir, ".kube/config")
-	KubeConfigEnv := os.Getenv("KUBECONFIG")
-	if KubeConfigEnv != "" {
-		kubeConfigFilename = KubeConfigEnv
-	}
-
-	kubeconfig, err := os.ReadFile(kubeConfigFilename)
-	if err != nil {
-		t.Fatalf("for call this test 1) setup k8s environment  2) run $go test --tags=K8SIntegration  ./... -run K8SIntegration")
-	}
-
+func getTarget(_ *testing.T) *types.Target {
 	return &types.Target{
-		Namespace:  "test",
-		Kubeconfig: kubeconfig,
+		Spec: &types.TargetSpec{
+			Namespace: "test",
+			Kubeconfig: types.Kubeconfig{
+				UseDefault: true,
+			},
+		},
 	}
 }

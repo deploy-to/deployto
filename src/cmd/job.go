@@ -82,7 +82,7 @@ func callJob(cCtx *cli.Context, workdirpath string, input map[string]any) (outpu
 		}
 	}
 
-	fs := filesystem.GetFilesystem("file://" + path)
+	fs := filesystem.Get("file://" + path)
 
 	// Application
 	apps := yaml.Get[types.Job](fs, "/")
