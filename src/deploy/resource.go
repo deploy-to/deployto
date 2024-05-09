@@ -1,6 +1,7 @@
 package deploy
 
 import (
+	"deployto/src"
 	"deployto/src/filesystem"
 	"deployto/src/types"
 	"deployto/src/yaml"
@@ -16,19 +17,16 @@ func init() {
 	RunScriptFuncImplementations[""] = Resource //default script type
 }
 
-func Resource(target *types.Target, fs *filesystem.Filesystem, workDir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Resource(target *types.Target, fs *filesystem.Filesystem, workDir string, aliases []string, rootValues, input types.Values, ContextDump *src.ContextDump) (output types.Values, err error) {
 	selector := types.DecodeResourceArg(input)
-	return runResourceTyped(target, fs, aliases, rootValues, selector)
+	return runResourceTyped(target, fs, aliases, rootValues, selector, ContextDump)
 }
 
-func runResourceTyped(target *types.Target, _ *filesystem.Filesystem, aliases []string, rootValues types.Values, selector *types.ResourceArg) (output types.Values, err error) {
+func runResourceTyped(target *types.Target, _ *filesystem.Filesystem, aliases []string, rootValues types.Values, selector *types.ResourceArg, ContextDump *src.ContextDump) (output types.Values, err error) {
 	log.Debug().Strs("aliases", aliases).Msg("Search template")
 	template := searchResourceInRepositories(selector)
 	log.Debug().Str("templateDir", template.Status.FileName).Msg("found template")
-	//var similars []*types.Component
-	//TODO cache
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	return RunSingleComponent(target, aliases, rootValues, selector.Values, template)
+	return RunSingleComponent(target, aliases, rootValues, selector.Values, template, ContextDump)
 }
 
 func searchResourceInRepositories(selector *types.ResourceArg) *types.Component {
@@ -94,6 +92,6 @@ func GetTemplateRepositories() (result []string) {
 			log.Error().Str("repository", r).Msg("Unsupport repository")
 		}
 	}
-	result = append(result, "git@github.com:deploy-to/deployto.git")
+	//result = append(result, "git@github.com:deploy-to/deployto.git")
 	return result
 }

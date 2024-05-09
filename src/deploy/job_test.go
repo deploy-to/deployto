@@ -46,7 +46,7 @@ echo "OUTPUT_VAR2=$INPUT_TEMPLAYTING" >> $DEPLOYTO_OUTPUT
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := runJob(filesystem.Get("temp"), "", &types.Job{Spec: &types.JobSpec{Steps: tt.steps}}, tt.aliases, tt.jobContext)
+			got, err := runJob(filesystem.Get("temp"), "", &types.Job{Spec: &types.JobSpec{Steps: tt.steps}}, tt.aliases, tt.jobContext, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("runJob() error = %v, wantErr %v", err, tt.wantErr)
 				return

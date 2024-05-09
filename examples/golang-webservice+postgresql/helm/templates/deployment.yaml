@@ -2,7 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Values.alias }}-deployment
+  labels:
+    app: nginx
 spec:
+  selector:
+    label: {{ .Values.alias }}-deployment
   template:
     spec:
       containers:
@@ -11,7 +15,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.port }}
+              containerPort: 80
               protocol: TCP
           livenessProbe:
             httpGet:
@@ -30,4 +34,4 @@ spec:
       volumes:
         - name: secret-volume
           secret:
-            secretName: {{ include "service.fullname" . }}
+            secretName: {{ .Values.name }}

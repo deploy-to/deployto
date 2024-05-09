@@ -3,6 +3,7 @@ package deploy
 import (
 	"bytes"
 	"context"
+	"deployto/src"
 	"deployto/src/filesystem"
 	"deployto/src/types"
 	"encoding/json"
@@ -22,10 +23,10 @@ func init() {
 	RunScriptFuncImplementations["helm"] = Helm
 }
 
-func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values, dump *src.ContextDump) (output types.Values, err error) {
 	var outputBuffer bytes.Buffer
 	//set settings for helm
-	opt := &helmclient.KubeConfClientOptions{
+	options := &helmclient.KubeConfClientOptions{
 		Options: &helmclient.Options{
 			Namespace:        target.Spec.Namespace, // Change this to the namespace you wish to install the chart in.
 			RepositoryCache:  filepath.Join(os.TempDir(), ".helmcache"),
@@ -40,46 +41,50 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 		KubeContext: "",
 		KubeConfig:  target.LoadKubeconfig(),
 	}
+	helmClient, err := helmclient.NewClientFromKubeConf(options)
 
-	helmClient, err := helmclient.NewClientFromKubeConf(opt)
-
+	var chartName string
 	if err != nil {
 		log.Error().Err(err).Msg("Create helm client error")
 		return nil, err
 	}
 	// get repository url
 	repository := types.Get(input, "", "repository")
-	if repository[len(repository)-1] != '/' {
-		repository += "/"
-	}
-	u, err := url.Parse(repository)
-	if err != nil {
-		log.Error().Err(err).Msg("Url parsing  error")
-		return nil, err
-	}
-	// get name for repository from url path
-	ua := strings.Split(u.Path, "/")
-	chartRepo := repo.Entry{
-		Name: ua[1],
-		URL:  repository,
+	if repository == "" || filesystem.Supported(repository) {
+		chartName = filepath.Join(repositoryFS.LocalPath, workdir)
+	} else {
+		if repository[len(repository)-1] != '/' {
+			repository += "/"
+		}
+		u, err := url.Parse(repository)
+		if err != nil {
+			log.Error().Err(err).Msg("Url parsing  error")
+			return nil, err
+		}
+		// get name for repository from url path
+		ua := strings.Split(u.Path, "/")
+		chartRepo := repo.Entry{
+			Name: ua[1],
+			URL:  repository,
+		}
+		// Add a chart-repository to the client.
+		if err := helmClient.AddOrUpdateChartRepo(chartRepo); err != nil {
+			log.Error().Err(err).Str("path", "helm").Msg("Add a chart-repository to the client error")
+			return nil, err
+		}
+		chartName = chartRepo.Name + "/" + types.Get(input, aliases[len(aliases)-1], "name")
 	}
 
-	// Add a chart-repository to the client.
-	if err := helmClient.AddOrUpdateChartRepo(chartRepo); err != nil {
-		log.Error().Err(err).Str("path", "helm").Msg("Add a chart-repository to the client error")
-		return nil, err
-	}
 	valuesFile, err := yaml.Marshal(&input)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Pasing yaml error")
 		return nil, err
 	}
-	kind := types.Get(input, aliases[len(aliases)-1], "name")
 	version := types.Get(input, aliases[len(aliases)-1], "version")
 	// put settings for chart and put values
 	chartSpec := helmclient.ChartSpec{
 		ReleaseName:     buildAlias(aliases),
-		ChartName:       chartRepo.Name + "/" + kind,
+		ChartName:       chartName,
 		Version:         version,
 		ValuesYaml:      string(valuesFile),
 		CreateNamespace: true,
@@ -88,43 +93,45 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 		Wait:            true,
 		Timeout:         time.Duration(5 * float64(time.Minute)),
 	}
+	dump.Push("helmChartSpec", chartSpec)
 
 	// Install a chart release.
 	// Note that helmclient.Options.Namespace should ideally match the namespace in chartSpec.Namespace.
 	release, err := helmClient.InstallOrUpgradeChart(context.TODO(), &chartSpec, nil)
 	if err != nil {
-		log.Error().Err(err).Str("path", "helm").Msg("Install chart error")
+		log.Error().Err(err).Msg("Install chart error")
 		return nil, err
 	}
+
 	if release.Info.Status.String() != "deployed" {
-		log.Error().Err(err).Str("path", "helm").Msg("Release chart not deployed")
+		log.Error().Err(err).Msg("Release chart not deployed")
 		return nil, err
 	}
-	poutput, err := helmClient.GetReleaseValues(kind, true)
+	poutput, err := helmClient.GetReleaseValues(buildAlias(aliases), true)
 	if err != nil {
-		log.Error().Err(err).Str("path", "helm").Msg("Get Release chart error")
+		log.Error().Err(err).Msg("Get Release chart error")
 		return nil, err
 	}
 	template, err := helmClient.TemplateChart(&chartSpec, nil)
 	if err != nil {
-		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
+		log.Error().Err(err).Msg("Template chart error")
 		return nil, err
 	}
 	var manifest map[string]any
 	err = yaml.Unmarshal(template, &manifest)
 	if err != nil {
-		log.Error().Err(err).Str("path", "helm").Msg("Template chart error")
+		log.Error().Err(err).Msg("Template chart error")
 		return nil, err
 	}
 	var releaseamp map[string]any
 	releasein, err := json.Marshal(release)
 	if err != nil {
-		log.Error().Err(err).Str("path", "helm").Msg("Marshal release error")
+		log.Error().Err(err).Msg("Marshal release error")
 		return nil, err
 	}
 	err = yaml.Unmarshal(releasein, &releaseamp)
 	if err != nil {
-		log.Error().Err(err).Str("path", "helm").Msg("Unmarshal release error")
+		log.Error().Err(err).Msg("Unmarshal release error")
 		return nil, err
 	}
 	scriptOutput := make(types.Values)

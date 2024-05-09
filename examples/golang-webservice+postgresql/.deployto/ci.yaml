@@ -6,7 +6,7 @@ spec:
   steps:
     - name: build
       run: |
-        docker build --tag ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} -f ${DOCKERFILE} .
+        docker build --tag ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} .
         docker tag ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${TAG}
         docker tag ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} ${DOCKER_REGISTRY}/${APPLICATION_NAME}:latest
       env:

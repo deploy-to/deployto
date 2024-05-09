@@ -7,8 +7,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}",
-            "args": ["--ll=debug"],
-            "cwd": "${workspaceFolder}/examples/webservice+postgresql"
+            "args": ["--ll=debug", "--dump=dump"],
+            "cwd": "${workspaceFolder}/examples/golang-webservice+postgresql"
         }
     ]
 }

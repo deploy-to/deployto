@@ -25,6 +25,11 @@ var Flags = []cli.Flag{
 		Usage:   "Log level: trace, debug, warn, info, fatal, panic, absent, disable",
 	}),
 	altsrc.NewStringFlag(&cli.StringFlag{
+		Name:    "log-context-dump-dir",
+		Aliases: []string{"dump"},
+		Usage:   "Path where save context dubp",
+	}),
+	altsrc.NewStringFlag(&cli.StringFlag{
 		Name:        "kubeconfig",
 		EnvVars:     []string{"KUBECONFIG"},
 		Usage:       "Set to use when target.kubeconfig.usedefault is set.",

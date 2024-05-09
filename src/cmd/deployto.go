@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"deployto/src"
 	"deployto/src/deploy"
 	"deployto/src/filesystem"
 	"deployto/src/types"
@@ -25,6 +26,8 @@ func Deployto(cCtx *cli.Context) error {
 		log.Error().Err(err).Msg("Get workdir error")
 		return err
 	}
+
+	ContextDump := src.GetContextDump(path, cCtx.String("dump"))
 
 	fs := filesystem.GetDeploytoRootFilesystem(filesystem.Get("file://"+path), "/")
 	if fs == nil {
@@ -68,10 +71,11 @@ func Deployto(cCtx *cli.Context) error {
 			"target":      target.Base.Meta.Name,
 		}
 		//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
+
 		release, e := deploy.Component(target,
 			fs, "/",
 			nil,
-			rootValues, context)
+			rootValues, context, ContextDump.Next(target.Meta.Name))
 		if e != nil {
 			log.Error().Err(e).Msg("Component deploy error")
 			err = errors.Join(err, e)
