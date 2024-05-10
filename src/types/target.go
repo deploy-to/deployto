@@ -15,9 +15,10 @@ type Target struct {
 }
 
 type TargetSpec struct {
-	Namespace  string     `json:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Kubeconfig Kubeconfig `json:"kubeconfig,omitempty" yaml:"kubeconfig,omitempty"`
-	Script     *Script    `json:"script,omitempty" yaml:"script,omitempty"`
+	Namespace  string         `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	Kubeconfig Kubeconfig     `json:"kubeconfig,omitempty" yaml:"kubeconfig,omitempty"`
+	Script     *Script        `json:"script,omitempty" yaml:"script,omitempty"`
+	Terraform  map[string]any `json:"terraform,omitempty" yaml:"terraform,omitempty"`
 }
 
 type Kubeconfig struct {

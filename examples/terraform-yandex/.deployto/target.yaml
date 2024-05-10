@@ -1,0 +1,20 @@
+apiVersion: deployto.dev/v1beta1
+kind: Environment
+metadata:
+  name: local
+spec:
+  targets:
+    - local-target-ya-cloud
+---
+apiVersion: deployto.dev/v1beta1
+kind: Target
+metadata:
+  name: local-target-ya-cloud
+spec:
+  terraform:
+    path: "file://../terraform/provider.tf"
+    env: 
+      zone: "zone-name"
+      token: "TOKEN"
+      cloud_id: "YC_CLOUD_ID"
+      folder_id: "YC_FOLDER_ID"

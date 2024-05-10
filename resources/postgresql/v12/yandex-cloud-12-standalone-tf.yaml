@@ -1,0 +1,24 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: posgresql
+spec:
+  script:
+    type: terraform
+    name: postgresql  
+    path: file://../terraform/postgresql.tf                              
+    # TODO git clone repository
+    #repository: https://git.host/resources/postgresql/v12  # определяется в template
+    version:          "15.1.0"                      # определяется в template
+    fullnameOverride: "{{ .alias }}"   # локально "{{ .alias }}" , в яндексе, что получится
+    auth:
+      database:         "{{ .alias }}" # сохранять
+      username:         servicea-user  # сохранять, генериться из parent aleas, или rnd
+      password:         HOrFk14CyX     # сохранять, генериться rnd
+      postgresPassword": xxdsdsddsxxxx # сохранять, генериться из parent aleas, или rnd
+    outputMapping:
+      hostname: "{{ .context.fullnameOverride }}"
+      database: "{{ .context.auth.database }}"
+      username: "{{ .context.auth.username }}"
+      password: "{{ .context.auth.password }}"
+    
