@@ -22,7 +22,7 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			"postgresPassword": "xxdsdsddsxxxx",
 		},
 	}
-	output, err := Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs)
+	output, err := Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs, nil)
 	if err != nil {
 		t.Fatalf("Helm error %v", err)
 	}
@@ -76,7 +76,7 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			"repmgrPassword":   "repmgrpss",
 		},
 	}
-	output, err = Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs)
+	output, err = Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs, nil)
 	if err != nil {
 		t.Fatalf("Helm error %v", err)
 	}
@@ -109,7 +109,7 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			},
 		},
 	}
-	_, err = Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs)
+	_, err = Helm(getTarget(t), nil, "", []string{"AAAAA"}, types.Values(nil), inputs, nil)
 	if err == nil {
 		t.Fatalf("wait helm error")
 	}

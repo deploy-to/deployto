@@ -24,7 +24,7 @@ type Step struct {
 
 func DecodeJob(values any) (job *Job) {
 	if values == nil {
-		log.Info().Msg("DecodeScript - input values is nil")
+		log.Info().Msg("DecodeJob - input values is nil")
 		return nil
 	}
 	job = &Job{}

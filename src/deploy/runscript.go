@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"bytes"
+	"deployto/src"
 	"deployto/src/filesystem"
 	"deployto/src/types"
 	"errors"
@@ -10,11 +11,11 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type RunScriptFuncImplementationType = func(target *types.Target, fs *filesystem.Filesystem, workDir string, aliases []string, rootValues, values types.Values) (output map[string]any, err error)
+type RunScriptFuncImplementationType = func(target *types.Target, fs *filesystem.Filesystem, workDir string, aliases []string, rootValues, values types.Values, ContextDump *src.ContextDump) (output map[string]any, err error)
 
 var RunScriptFuncImplementations = map[string]RunScriptFuncImplementationType{}
 
-func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, script *types.Script, rootContext, parentContext types.Values) (output types.Values, err error) {
+func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, script *types.Script, rootContext, parentContext types.Values, ContextDump *src.ContextDump) (output types.Values, err error) {
 	l := log.With().Strs("aliases", aliases).Logger()
 
 	if theDependencyWasDeployedEarlier, ok := rootContext[buildAlias(aliases)]; ok {
@@ -22,7 +23,9 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 		return theDependencyWasDeployedEarlier.(types.Values), nil
 	}
 
-	l.Info().Str("type", script.Type).Str("repository", script.Repository).Str("path", script.Path).Bool("root", script.Root).Msg("RunScript")
+	if script == nil {
+		script = &types.Script{}
+	}
 
 	if script.Values == nil {
 		script.Values = make(types.Values)
@@ -43,6 +46,8 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 		workdir = repositoryFS.FS.Join(workdir, script.Path)
 	}
 
+	l.Info().Str("type", script.Type).Str("repository", script.Repository).Str("path", script.Path).Bool("root", script.Root).Msg("RunScript")
+
 	context, err := prepareInput(script.Values, rootContext, parentContext, aliases)
 	if err != nil {
 		l.Error().Err(err).Msg("templating error")
@@ -50,10 +55,13 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 	}
 	l.Info().Any("values", script.Values).Any("rootOutput", rootContext).Any("scriptContext", parentContext).Any("input", context).Msg("RunScript - values")
 
+	ContextDump.Push("context", context)
+	ContextDump.Push("script", script)
+
 	if RunScriptFuncImplementation, ok := RunScriptFuncImplementations[script.Type]; ok {
 		output, err = RunScriptFuncImplementation(target, repositoryFS, workdir,
 			aliases,
-			rootContext, context)
+			rootContext, context, ContextDump)
 		if err != nil {
 			l.Error().Err(err).Msg("RunScriptFuncImplementation error")
 			return nil, err
@@ -64,6 +72,8 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 			l.Error().Err(err).Msg("prepareOutput error")
 			return nil, err
 		}
+		ContextDump.Push("output", output)
+
 		//TODO подумать, возможноли и нужно ли избегать безконечного цикла, когда в компоненте вызывается зависимость на саму себя (возможно неявно через цепочку)
 		//например, добавить в начало Component(...), счётчик вызовов определённого пути, и не допускать вызова более 10 раз
 		if script.Root {

@@ -8,6 +8,7 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
+	"github.com/lithammer/shortuuid/v3"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,11 +17,12 @@ type FilesystemType int
 const (
 	LOCAL FilesystemType = iota
 	GIT
+	TEMP
 )
 
 type Filesystem struct {
 	URI       string
-	localPath string
+	LocalPath string
 	Type      FilesystemType
 	FS        billy.Filesystem
 }
@@ -31,11 +33,26 @@ func Supported(uri string) bool {
 }
 
 func Get(uri string) *Filesystem {
+	//TODO Howto remove temp dir (and git). Save list and remove on application exit?
+	if uri == "temp" {
+		localPath := filepath.Join(os.TempDir(), "deployto-tempfs", shortuuid.New())
+		err := os.MkdirAll(localPath, os.ModePerm)
+		if err != nil {
+			log.Error().Err(err).Msg("Can't make tmp dir for git clone")
+			return nil
+		}
+		return &Filesystem{
+			Type:      TEMP,
+			URI:       uri,
+			LocalPath: localPath,
+			FS:        osfs.New(localPath),
+		}
+	}
 	if localPath, isLOCAL := strings.CutPrefix(uri, "file://"); isLOCAL {
 		return &Filesystem{
 			Type:      LOCAL,
 			URI:       uri,
-			localPath: localPath,
+			LocalPath: localPath,
 			FS:        osfs.New(localPath),
 		}
 	}
@@ -49,7 +66,7 @@ func Get(uri string) *Filesystem {
 		return &Filesystem{
 			Type:      GIT,
 			URI:       uri,
-			localPath: localPath,
+			LocalPath: localPath,
 			FS:        osfs.New(localPath),
 		}
 	}
