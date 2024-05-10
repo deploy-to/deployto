@@ -3,6 +3,7 @@ package deploy
 import (
 	"bufio"
 	"context"
+	"deployto/src"
 	"deployto/src/filesystem"
 	"deployto/src/types"
 	"os"
@@ -16,7 +17,7 @@ func init() {
 	RunScriptFuncImplementations["terraform"] = Terraform
 }
 
-func Terraform(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values) (output types.Values, err error) {
+func Terraform(target *types.Target, repositoryFS *filesystem.Filesystem, workdir string, aliases []string, rootValues, input types.Values, dump *src.ContextDump) (output types.Values, err error) {
 
 	//TODO find terraform exec
 	execPath := "/usr/local/bin/terraform"
