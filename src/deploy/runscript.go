@@ -53,7 +53,7 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 		l.Error().Err(err).Msg("templating error")
 		return nil, err
 	}
-	l.Info().Any("values", script.Values).Any("rootOutput", rootContext).Any("scriptContext", parentContext).Any("input", context).Msg("RunScript - values")
+	l.Trace().Any("values", script.Values).Any("rootOutput", rootContext).Any("scriptContext", parentContext).Any("input", context).Msg("RunScript - values")
 
 	ContextDump.Push("context", context)
 	ContextDump.Push("script", script)
@@ -66,6 +66,8 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 			l.Error().Err(err).Msg("RunScriptFuncImplementation error")
 			return nil, err
 		}
+
+		ContextDump.Push("outputBeforeMapping", output)
 
 		output, err = prepareOutput(script.OutputMapping, output, context, aliases)
 		if err != nil {
@@ -111,7 +113,7 @@ func prepareInput(values, rootContext, parentContext types.Values, aliases []str
 }
 
 func prepareOutput(outputMapping, output, context types.Values, aliases []string) (types.Values, error) {
-	templated, err := templating(outputMapping, types.Values{"output": output, "context": context})
+	templated, err := templating(outputMapping, types.Values{"output": output, "Values": context})
 	if err != nil {
 		log.Error().Err(err).Strs("aliases", aliases).Msg("prepareValues error")
 		return nil, err

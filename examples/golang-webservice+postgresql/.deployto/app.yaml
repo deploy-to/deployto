@@ -3,11 +3,15 @@ kind: Component
 metadata:
   name: example01
 spec:
-  # dependencies:
-  #   ci:
-  #     type: job
-  #     path: ..
-  #   postgresql:
+  dependencies:
+    ci:
+      type: job
+      path: ..
+    postgresql:
+      auth:
+        username:         servicea-user
+        password:         HOrFk14CyX
+        postgresPassword: xxdsdsddsxxxx
   script:
     type: helm
     path: ../helm

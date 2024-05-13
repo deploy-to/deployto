@@ -4,23 +4,31 @@ metadata:
   name: ci
 spec:
   steps:
-    - name: build
+    - id: build
       run: |
         docker build --tag ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} .
-        docker tag ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${TAG}
-        docker tag ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} ${DOCKER_REGISTRY}/${APPLICATION_NAME}:latest
+
+        echo "REGISTRY=docker.io/$DOCKER_REGISTRY"          >> "$DEPLOYTO_OUTPUT"
+        echo "APPLICATION_NAME=$APPLICATION_NAME" >> "$DEPLOYTO_OUTPUT"
+        echo "COMMITSHORT=$COMMITSHORT"           >> "$DEPLOYTO_OUTPUT"
       env:
         DOCKER_REGISTRY:  deployto
         APPLICATION_NAME: "{{ .component }}"
-        TAG:         "{{ .git.Tag }}"
         COMMITSHORT: "{{ .git.CommitShort }}"
-        DOCKERFILE: "../dockerfile"
-    - name: push
+    - id: pushMinikube
       continue-on-error: true
       run: |
-        minikube image rm ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} && minikube image load ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} 
-        minikube image rm ${DOCKER_REGISTRY}/${APPLICATION_NAME}:latest && minikube image load ${DOCKER_REGISTRY}/${APPLICATION_NAME}:latest
+        minikube image load ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} 
       env:
         DOCKER_REGISTRY:  deployto
         APPLICATION_NAME: "{{ .component }}"
         COMMITSHORT: "{{ .git.CommitShort }}"
+    - id: pushK3d
+      continue-on-error: true
+      run: |
+        k3d image import ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} --cluster $CLUSTER
+      env:
+        DOCKER_REGISTRY:  deployto
+        APPLICATION_NAME: "{{ .component }}"
+        COMMITSHORT: "{{ .git.CommitShort }}"
+        CLUSTER: test

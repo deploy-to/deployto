@@ -86,7 +86,9 @@ func RunSingleComponent(target *types.Target, aliases []string, rootContext, con
 	if output == nil {
 		output = make(types.Values)
 	}
-	output["dependencies"] = dependenciesOutput
+	for k, v := range dependenciesOutput {
+		output[k] = v
+	}
 	return output, nil
 }
 
