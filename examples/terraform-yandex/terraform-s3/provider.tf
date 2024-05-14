@@ -1,4 +1,11 @@
 
+variable "deployto_context" {
+  type = object({
+    name    = string
+    address = string
+  })
+  sensitive = true
+}
 
 variable "YC_CLOUD_ID" {
   description = ""
@@ -16,7 +23,7 @@ variable "YC_TOKEN" {
   sensitive = true
 }
 
-variable "zone" {
+variable "YC_ZONE" {
   description = "zone name"
   type        = string
 }
@@ -31,7 +38,7 @@ terraform {
 }
 
 provider "yandex" {
-  zone = var.zone
+  zone = var.YC_ZONE
   token     = var.YC_TOKEN
   cloud_id  = var.YC_CLOUD_ID
   folder_id = var.YC_FOLDER_ID

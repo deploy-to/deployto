@@ -7,6 +7,7 @@ import (
 	"deployto/src/types"
 	"errors"
 	"html/template"
+	"net/url"
 
 	"github.com/rs/zerolog/log"
 )
@@ -33,7 +34,14 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 	if _, ok := script.Values["resource"]; !ok {
 		script.Values["resource"] = aliases[len(aliases)-1]
 	}
-
+	// script.Path prepare for go-git function
+	// remove Schema from path
+	u, err := url.Parse(script.Path)
+	if err != nil {
+		log.Error().Err(err).Msg("Url parsing  error")
+		return nil, err
+	}
+	script.Path = u.Host + u.Path
 	if script.Repository != "" {
 		if filesystem.Supported(script.Repository) {
 			repositoryFS = filesystem.Get(script.Repository)

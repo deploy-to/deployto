@@ -108,7 +108,9 @@ func searchLocalRoot(fs *Filesystem, path string, dirName string) *Filesystem {
 		return nil
 	}
 	currentPath = filepath.Clean(filepath.Join(currentPath, path))
-	for {
+	// loop guard
+	// если за 50 итерация не нашли директорию
+	for i := 1; i < 50; i++ {
 		if IsDirExists(filepath.Join(currentPath, dirName)) {
 			log.Debug().Str("searchDir", dirName).Str("path", currentPath).Msg("searchDir found")
 			return Get("file://" + currentPath)
@@ -120,6 +122,7 @@ func searchLocalRoot(fs *Filesystem, path string, dirName string) *Filesystem {
 		}
 		currentPath = filepath.Dir(currentPath)
 	}
+	return nil
 }
 
 const DeploytoDirName = ".deployto"
