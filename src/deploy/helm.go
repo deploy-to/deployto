@@ -113,7 +113,7 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 	}
 
 	scriptOutput := make(types.Values)
-	scriptOutput["manifest"] = release.Manifest
+	//	scriptOutput["manifest"] = release.Manifest
 	scriptOutput["values"] = release.Config
 	scriptOutput["name"] = release.Name
 	scriptOutput["version"] = release.Version

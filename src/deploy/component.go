@@ -41,7 +41,7 @@ func Component(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 
 func RunSingleComponent(target *types.Target, aliases []string, rootContext, context types.Values, comp *types.Component, ContextDump *src.ContextDump) (output types.Values, err error) {
 	l := log.With().Strs("aliases", aliases).Logger()
-	dependenciesOutput := make(types.Values)
+	output = make(types.Values)
 
 	// зависимость git  выполняется всегда
 	l.Debug().Msg("Get commit hash and tags")
@@ -49,45 +49,35 @@ func RunSingleComponent(target *types.Target, aliases []string, rootContext, con
 	context["component"] = aliases[len(aliases)-1]
 	context["alias"] = buildAlias(aliases)
 
-	dependencies := types.Get(comp.Spec, types.Values(nil), "dependencies")
-	for alias, dependencyAsMap := range dependencies {
-		dependencyScript := types.DecodeScript(dependencyAsMap)
-		var dependencyAliases []string
-		if dependencyScript != nil && dependencyScript.Root {
-			log.Debug().Strs("aliases", aliases).Str("dependency", alias).Msg("Dependency is root")
-			dependencyAliases = []string{alias}
-		} else {
-			dependencyAliases = append(aliases, alias)
-		}
+	ordered := types.GetTheOrderOfResource(comp.Spec)
+	for _, sameOrder := range ordered {
+		context = types.MergeValues(context, output)
+		// TODO sameOrder parallel deploy (+config)
+		for _, script := range sameOrder {
+			resourceAliases := aliases
+			if script.Shared {
+				log.Debug().Strs("aliases", aliases).Str("script", script.Alias).Msg("Script is shared")
+				resourceAliases = []string{script.Alias}
+			} else {
+				if script.Alias != "" {
+					resourceAliases = append(resourceAliases, script.Alias)
+				}
+			}
 
-		dependencyOutput, err := RunScript(target, comp.Status.Filesystem, filepath.Dir(comp.Status.FileName),
-			dependencyAliases,
-			dependencyScript,
-			rootContext, context, ContextDump.Next(buildAlias(dependencyAliases)))
-		if err != nil {
-			l.Error().Err(err).Strs("aliases", dependencyAliases).Msg("Dependency error")
-			return output, err
+			scriptOutput, err := RunScript(target, comp.Status.Filesystem, filepath.Dir(comp.Status.FileName),
+				resourceAliases,
+				script,
+				rootContext, context, ContextDump.Next(buildAlias(resourceAliases)))
+			if err != nil {
+				l.Error().Err(err).Strs("aliases", resourceAliases).Msg("Dependency error")
+				return output, err
+			}
+			if script.Alias == "" {
+				output = types.MergeValues(output, scriptOutput)
+			} else {
+				output[script.Alias] = scriptOutput
+			}
 		}
-		dependenciesOutput[alias] = dependencyOutput
-	}
-
-	if types.Exists(comp.Spec, "script") {
-		compScript := types.DecodeScript(types.Get(comp.Spec, types.Values(nil), "script"))
-
-		scriptContext := types.MergeValues(dependenciesOutput, context)
-		output, err = RunScript(target, comp.Status.Filesystem, filepath.Dir(comp.Status.FileName),
-			aliases,
-			compScript,
-			rootContext, scriptContext, ContextDump.Next("script"))
-		if err != nil {
-			l.Error().Err(err).Msg("RunScript error")
-		}
-	}
-	if output == nil {
-		output = make(types.Values)
-	}
-	for k, v := range dependenciesOutput {
-		output[k] = v
 	}
 	return output, nil
 }

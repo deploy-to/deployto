@@ -3,7 +3,8 @@ kind: Component
 metadata:
   name: postgresql
 spec:
-  script:
+  install:
+    alias: ""
     type: helm
     name: postgresql
     repository: https://charts.bitnami.com/bitnami

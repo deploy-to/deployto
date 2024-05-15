@@ -7,15 +7,17 @@ import (
 
 type Dependency = Script
 type Script = struct {
+	Order         int
 	Type          string
 	Repository    string
 	Path          string
-	Root          bool
+	Shared        bool
+	Alias         string
 	OutputMapping Values
-	Values        Values `mapstructure:",remain"` //Values хранятся на том же уровне, что и Type, Root
+	Values        Values `mapstructure:",remain"` //Values хранятся на том же уровне, что и Order, Type...
 }
 
-func DecodeScript(values any) (script *Script) {
+func DecodeScript(defaultAlias string, values Values) (script *Script) {
 	if values == nil {
 		log.Info().Msg("DecodeScript - input values is nil")
 		return nil
@@ -26,5 +28,12 @@ func DecodeScript(values any) (script *Script) {
 		log.Error().Err(err).Msg("DecodeScript error")
 		return nil
 	}
+	if _, orderExists := values["order"]; !orderExists {
+		script.Order = 100
+	}
+	if _, aliasExists := values["alias"]; !aliasExists {
+		script.Alias = defaultAlias
+	}
+
 	return script
 }
