@@ -3,7 +3,8 @@ kind: Component
 metadata:
   name: postgresql
 spec:
-  script:
+  install:
     resource: postgresql
     version: v16.2
     name: bitnami-15.1.0-standalone
+    alias: ""

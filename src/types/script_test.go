@@ -14,21 +14,22 @@ func TestDecodeScript(t *testing.T) {
 		{
 			name: "simple",
 			values: Values{
-				"type": "testType",
-				"root": true,
-				"v1":   "k1",
-				"v2":   2,
+				"type":   "testType",
+				"shared": true,
+				"v1":     "k1",
+				"v2":     2,
 			},
 			wantScript: &Script{
 				Type:   "testType",
-				Root:   true,
+				Shared: true,
+				Order:  100,
 				Values: Values{"v1": "k1", "v2": 2},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotScript := DecodeScript(tt.values)
+			gotScript := DecodeScript("", tt.values)
 			if !reflect.DeepEqual(gotScript, tt.wantScript) {
 				t.Errorf("DecodeScript() = %v, want %v", gotScript, tt.wantScript)
 			}

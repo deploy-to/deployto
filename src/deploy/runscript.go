@@ -46,7 +46,7 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 		workdir = repositoryFS.FS.Join(workdir, script.Path)
 	}
 
-	l.Info().Str("type", script.Type).Str("repository", script.Repository).Str("path", script.Path).Bool("root", script.Root).Msg("RunScript")
+	l.Info().Str("type", script.Type).Str("repository", script.Repository).Str("path", script.Path).Bool("root", script.Shared).Msg("RunScript")
 
 	context, err := prepareInput(script.Values, rootContext, parentContext, aliases)
 	if err != nil {
@@ -78,7 +78,7 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 
 		//TODO подумать, возможноли и нужно ли избегать безконечного цикла, когда в компоненте вызывается зависимость на саму себя (возможно неявно через цепочку)
 		//например, добавить в начало Component(...), счётчик вызовов определённого пути, и не допускать вызова более 10 раз
-		if script.Root {
+		if script.Shared {
 			rootContext[buildAlias(aliases)] = output
 		}
 
