@@ -6,7 +6,6 @@ import (
 	"deployto/src"
 	"deployto/src/filesystem"
 	"deployto/src/types"
-	"encoding/json"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -92,10 +91,13 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 		CreateNamespace: true,
 		Namespace:       target.Spec.Namespace,
 		UpgradeCRDs:     true,
-		Wait:            true,
-		Timeout:         time.Duration(5 * float64(time.Minute)),
+		//Wait:            true,
+		Timeout: time.Duration(5 * float64(time.Minute)),
+		//DryRun:          true,
 	}
 	dump.Push("helmChartSpec", chartSpec)
+
+	//helmClient.De
 
 	// Install a chart release.
 	// Note that helmclient.Options.Namespace should ideally match the namespace in chartSpec.Namespace.
@@ -105,40 +107,17 @@ func Helm(target *types.Target, repositoryFS *filesystem.Filesystem, workdir str
 		return nil, err
 	}
 
+	dump.Push("manifest", release.Manifest)
+
 	if release.Info.Status.String() != "deployed" {
 		log.Error().Err(err).Msg("Release chart not deployed")
 		return nil, err
 	}
-	poutput, err := helmClient.GetReleaseValues(buildAlias(aliases), true)
-	if err != nil {
-		log.Error().Err(err).Msg("Get Release chart error")
-		return nil, err
-	}
-	template, err := helmClient.TemplateChart(&chartSpec, nil)
-	if err != nil {
-		log.Error().Err(err).Msg("Template chart error")
-		return nil, err
-	}
-	var manifest map[string]any
-	err = yaml.Unmarshal(template, &manifest)
-	if err != nil {
-		log.Error().Err(err).Msg("Template chart error")
-		return nil, err
-	}
-	var releaseamp map[string]any
-	releasein, err := json.Marshal(release)
-	if err != nil {
-		log.Error().Err(err).Msg("Marshal release error")
-		return nil, err
-	}
-	err = yaml.Unmarshal(releasein, &releaseamp)
-	if err != nil {
-		log.Error().Err(err).Msg("Unmarshal release error")
-		return nil, err
-	}
+
 	scriptOutput := make(types.Values)
-	scriptOutput["release"] = releaseamp
-	scriptOutput["manifest"] = manifest
-	scriptOutput["values"] = poutput
+	//	scriptOutput["manifest"] = release.Manifest
+	scriptOutput["values"] = release.Config
+	scriptOutput["name"] = release.Name
+	scriptOutput["version"] = release.Version
 	return scriptOutput, nil
 }

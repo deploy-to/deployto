@@ -54,14 +54,14 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 		workdir = repositoryFS.FS.Join(workdir, script.Path)
 	}
 
-	l.Info().Str("type", script.Type).Str("repository", script.Repository).Str("path", script.Path).Bool("root", script.Root).Msg("RunScript")
+	l.Info().Str("type", script.Type).Str("repository", script.Repository).Str("path", script.Path).Bool("root", script.Shared).Msg("RunScript")
 
 	context, err := prepareInput(script.Values, rootContext, parentContext, aliases)
 	if err != nil {
 		l.Error().Err(err).Msg("templating error")
 		return nil, err
 	}
-	l.Info().Any("values", script.Values).Any("rootOutput", rootContext).Any("scriptContext", parentContext).Any("input", context).Msg("RunScript - values")
+	l.Trace().Any("values", script.Values).Any("rootOutput", rootContext).Any("scriptContext", parentContext).Any("input", context).Msg("RunScript - values")
 
 	ContextDump.Push("context", context)
 	ContextDump.Push("script", script)
@@ -75,6 +75,8 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 			return nil, err
 		}
 
+		ContextDump.Push("outputBeforeMapping", output)
+
 		output, err = prepareOutput(script.OutputMapping, output, context, aliases)
 		if err != nil {
 			l.Error().Err(err).Msg("prepareOutput error")
@@ -84,7 +86,7 @@ func RunScript(target *types.Target, repositoryFS *filesystem.Filesystem, workdi
 
 		//TODO подумать, возможноли и нужно ли избегать безконечного цикла, когда в компоненте вызывается зависимость на саму себя (возможно неявно через цепочку)
 		//например, добавить в начало Component(...), счётчик вызовов определённого пути, и не допускать вызова более 10 раз
-		if script.Root {
+		if script.Shared {
 			rootContext[buildAlias(aliases)] = output
 		}
 
@@ -119,7 +121,7 @@ func prepareInput(values, rootContext, parentContext types.Values, aliases []str
 }
 
 func prepareOutput(outputMapping, output, context types.Values, aliases []string) (types.Values, error) {
-	templated, err := templating(outputMapping, types.Values{"output": output, "context": context})
+	templated, err := templating(outputMapping, types.Values{"output": output, "Values": context})
 	if err != nil {
 		log.Error().Err(err).Strs("aliases", aliases).Msg("prepareValues error")
 		return nil, err

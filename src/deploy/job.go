@@ -110,11 +110,9 @@ func runJob(fs *filesystem.Filesystem, workdir string, job *types.Job, aliases [
 
 				if step.Id != "" { //read output only if step.Id defined
 					outputRaw, err := os.ReadFile(stepOutputFile)
-					if err != nil {
-						log.Error().Err(err).Str("stepLine", stepLine).Str("stepOutputFile", stepOutputFile).Msg("read output error")
-						return nil, err
-					}
-					if len(outputRaw) > 0 {
+					if err != nil || len(outputRaw) == 0 {
+						log.Debug().Err(err).Str("stepLine", stepLine).Str("stepOutputFile", stepOutputFile).Msg("no output file or empty")
+					} else {
 						stepOutput := make(map[string]string)
 						for _, outputLine := range strings.Split(string(outputRaw), "\n") {
 							if len(outputLine) > 0 {
