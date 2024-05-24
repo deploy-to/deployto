@@ -28,10 +28,10 @@ spec:
         password:         HOrFk14CyX     # сохранять, генериться rnd
         postgresPassword": xxdsdsddsxxxx # сохранять, генериться из parent aleas, или rnd
       outputMapping:
-        hostname: "{{ .context.fullnameOverride }}"
-        database: "{{ .context.auth.database }}"
-        username: "{{ .context.auth.username }}"
-        password: "{{ .context.auth.password }}"
+        hostname: "{{ .fullnameOverride }}"
+        database: "{{ .auth.database }}"
+        username: "{{ .auth.username }}"
+        password: "{{ .auth.password }}"
 
   # script:
   #   type: helm

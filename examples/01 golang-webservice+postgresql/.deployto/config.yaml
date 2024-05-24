@@ -1,0 +1,3 @@
+template-repositories:
+- file:///home/alex/deployto
+terraform-binary: /home/alex/.deployto/terraform

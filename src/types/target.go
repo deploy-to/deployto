@@ -5,25 +5,27 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fatih/structs"
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/rs/zerolog/log"
 )
 
 type Target struct {
-	Base `json:",inline" yaml:",inline"`
-	Spec *TargetSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
+	Base `           json:",inline"        yaml:",inline"        structs:",flatten" mapstructure:",squash"`
+	Spec TargetSpec `json:"spec,omitempty" yaml:"spec,omitempty" structs:"spec"      `
 }
 
 type TargetSpec struct {
-	Namespace  string         `json:"namespace,omitempty" yaml:"namespace,omitempty"`
-	Kubeconfig Kubeconfig     `json:"kubeconfig,omitempty" yaml:"kubeconfig,omitempty"`
-	Script     *Script        `json:"script,omitempty" yaml:"script,omitempty"`
-	Terraform  map[string]any `json:"terraform,omitempty" yaml:"terraform,omitempty"`
+	Kubeconfig Kubeconfig     `json:"kubeconfig,omitempty" yaml:"kubeconfig,omitempty" structs:"kubeconfig"`
+	Terraform  map[string]any `json:"terraform,omitempty"  yaml:"terraform,omitempty"  structs:"terraform" `
 }
 
 type Kubeconfig struct {
-	Filename   string `json:"filename,omitempty" yaml:"filename,omitempty"`
-	UseDefault bool   `json:"usedefault,omitempty" yaml:"usedefault,omitempty"`
+	Namespace  string `json:"namespace,omitempty"  yaml:"namespace,omitempty"  structs:"namespace"`
+	Filename   string `json:"filename,omitempty"   yaml:"filename,omitempty"   structs:"filename"`
+	UseDefault bool   `json:"usedefault,omitempty" yaml:"usedefault,omitempty" structs:"usedefault"`
+	Value      []byte `json:"value,omitempty"      yaml:"value,omitempty"      structs:"value"`
 }
 
 var SystemKubeconfig string // set from Flags
@@ -83,4 +85,30 @@ func ReadFile(f billy.File) ([]byte, error) {
 			data = d[:len(data)]
 		}
 	}
+}
+
+func (t *Target) AsValues() Values {
+	return MergeValues(
+		t.Base.AsValues(),
+		Values{
+			"spec": structs.Map(t.Spec),
+		},
+	)
+}
+
+func DecodeTarget[T any | Values](values T) *Target {
+	if any(values) == nil {
+		log.Error().Type("valuesType", values).Msg("DecodeTarget - input values is nil")
+		return nil
+	}
+	if any(values).(Values)["spec"] == nil {
+		log.Warn().Type("valuesType", values).Any("values", values).Msg("DecodeTarget - input values dont contain spec. Target without spec, or error input?")
+	}
+	result := &Target{}
+	err := mapstructure.Decode(values, result)
+	if err != nil {
+		log.Error().Err(err).Msg("DecodeTarget error")
+		return nil
+	}
+	return result
 }

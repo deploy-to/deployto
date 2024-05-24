@@ -5,11 +5,14 @@ go 1.21.9
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/charmbracelet/huh v0.3.0
+	github.com/fatih/structs v1.1.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0
+	github.com/go-test/deep v1.1.0
+	github.com/go-viper/mapstructure/v2 v2.0.0-alpha.1
 	github.com/hashicorp/terraform-exec v0.20.0
+	github.com/hashicorp/terraform-json v0.19.0
 	github.com/lithammer/shortuuid/v3 v3.0.7
-	github.com/mitchellh/mapstructure v1.5.0
 	github.com/poncheg/go-helm-client v0.0.0-20240426092934-6e86eb5d9a54
 	github.com/rs/zerolog v1.32.0
 	github.com/urfave/cli/v2 v2.27.1
@@ -91,7 +94,6 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
-	github.com/hashicorp/terraform-json v0.19.0 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

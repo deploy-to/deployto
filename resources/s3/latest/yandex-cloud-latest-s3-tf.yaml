@@ -17,8 +17,7 @@ spec:
       password:         test-password     # сохранять, генериться rnd
       postgresPassword": test-pg-password # сохранять, генериться из parent aleas, или rnd
     outputMapping:
-      hostname: "{{ .context.fullnameOverride }}"
-      database: "{{ .context.auth.database }}"
-      username: "{{ .context.auth.username }}"
-      password: "{{ .context.auth.password }}"
-    
+      hostname: "{{ .fullnameOverride }}"
+      database: "{{ .auth.database }}"
+      username: "{{ .auth.username }}"
+      password: "{{ .auth.password }}"

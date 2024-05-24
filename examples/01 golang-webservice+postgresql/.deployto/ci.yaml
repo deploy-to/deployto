@@ -1,0 +1,34 @@
+apiVersion: deployto.dev/v1beta1
+kind: Job
+metadata:
+  name: ci
+spec:
+  steps:
+    - id: build
+      run: |
+        docker build --tag ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} .
+
+        echo "REGISTRY=docker.io/$DOCKER_REGISTRY" >> "$DEPLOYTO_OUTPUT"
+        echo "APPLICATION_NAME=$APPLICATION_NAME"  >> "$DEPLOYTO_OUTPUT"
+        echo "COMMITSHORT=$COMMITSHORT"            >> "$DEPLOYTO_OUTPUT"
+      env:
+        DOCKER_REGISTRY:  deployto
+        APPLICATION_NAME: "{{ .component }}"
+        COMMITSHORT: "{{ .git.CommitShort }}"
+    - id: pushMinikube
+      continue-on-error: true
+      run: |
+        minikube image load ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} 
+      env:
+        DOCKER_REGISTRY:  deployto
+        APPLICATION_NAME: "{{ .component }}"
+        COMMITSHORT: "{{ .git.CommitShort }}"
+    - id: pushK3d
+      continue-on-error: true
+      run: |
+        k3d image import ${DOCKER_REGISTRY}/${APPLICATION_NAME}:${COMMITSHORT} --cluster $CLUSTER
+      env:
+        DOCKER_REGISTRY:  deployto
+        APPLICATION_NAME: "{{ .component }}"
+        COMMITSHORT: "{{ .git.CommitShort }}"
+        CLUSTER: test
