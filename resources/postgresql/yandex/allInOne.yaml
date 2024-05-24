@@ -1,0 +1,52 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: yandex-allInOne
+spec:
+  network: 
+    order: 100
+    type: terraform
+    path: file://network
+    name: "{{ .alias }}"
+  subnet:
+    order: 110
+    type: terraform
+    path: file://subnet
+    network: "{{ .network.name   }}"
+    zone:    "{{ .target.spec.terraform.zone }}"
+    name:    "{{ .alias }}"
+  cluster:
+    order: 120
+    type: terraform
+    path: file://cluster
+    network: "{{ .network.name   }}"
+    subnet:  "{{ .subnet.name    }}"
+    zone: "{{ .target.spec.terraform.zone }}"
+    name: "{{ .alias }}"
+    assign_public_ip: true
+  user:
+    order: 130
+    type: terraform
+    path: file://user
+    name:     "{{ .auth.username }}"
+    password: "{{ .auth.password }}"
+    cluster:  "{{ .cluster.name  }}"
+  db:
+    order: 1000
+    type: terraform
+    path: file://database
+    alias: ""
+    cluster: "{{ .cluster.name  }}"
+    user:    "{{ .auth.username }}"
+    name:    "{{ .alias         }}"
+    outputMapping:
+      hostname: "c-{{ .cluster }}.rw.mdb.yandexcloud.net"
+      port:     6432
+      database: "{{ .alias         }}"
+      username: "{{ .auth.username }}"
+      password: "{{ .auth.password }}"
+      sslmode:  verify-full 
+      target_session_attrs: read-write
+      ssl_ca_file: "{{ .Files.Get \"resources/postgresql/yandex/database/ssl_ca_file.crt\" }}"
+
+

@@ -1,14 +1,10 @@
 package cmd
 
 import (
-	"deployto/src"
 	"deployto/src/deploy"
 	"deployto/src/filesystem"
-	"deployto/src/types"
-	"deployto/src/yaml"
 	"errors"
 	"os"
-	"slices"
 
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
@@ -27,64 +23,13 @@ func Deployto(cCtx *cli.Context) error {
 		return err
 	}
 
-	ContextDump := src.GetContextDump(path, cCtx.String("dump"))
-
 	fs := filesystem.GetDeploytoRootFilesystem(filesystem.Get("file://"+path), "/")
 	if fs == nil {
 		log.Error().Msg("components dir (.deployto) not found")
 		return errors.New("components dir (.deployto) not found")
 	}
 
-	// Envirement
-	environments := yaml.Get[types.Environment](fs, filesystem.DeploytoDirName)
-	var environment *types.Environment
-	for _, e := range environments {
-		if e.Base.Meta.Name == environmentArg {
-			environment = e
-		}
-	}
-	if environment == nil {
-		log.Error().Int("len(environments)", len(environments)).Str("path", path).Str("waitEnvironment", environmentArg).Msg("environment not found")
-		return errors.New("ENVIRONMENT NOT FOUND")
-	}
-	log.Debug().Str("name", environment.Base.Meta.Name).Msg("Environment found")
-	// Targets
-	var targets []*types.Target
-	for _, t := range yaml.Get[types.Target](fs, filesystem.DeploytoDirName) {
-		if slices.Contains(environment.Spec.Targets, t.Base.Meta.Name) {
-			targets = append(targets, t)
-		}
-	}
-	if len(targets) != len(environment.Spec.Targets) {
-		log.Error().Int("len(targets)", len(targets)).Int("len(environment.Spec.Targets)", len(environment.Spec.Targets)).Msg("Target not found")
-		return errors.New("TARGET NOT FOUND")
-	}
-	log.Debug().Int("len(targets)", len(targets)).Msg("Targets found")
+	deploy := deploy.NewDeploy(fs, "/", nil)
 
-	log.Info().Str("file", environment.Base.Status.FileName).Str("name", environment.Base.Meta.Name).Msg("Deploy environment")
-	for _, target := range targets {
-		log.Info().Str("file", target.Base.Status.FileName).Str("name", target.Base.Meta.Name).Msg("Deploy target")
-
-		rootValues := make(types.Values)
-		context := types.Values{
-			"environment": environment.Base.Meta.Name,
-			"target":      target.Base.Meta.Name,
-		}
-		//TODO позволить пользователю передавать в deploy.Component значения values заданные в командной строке / файле и т.п.
-
-		release, e := deploy.Component(target,
-			fs, "/",
-			nil,
-			rootValues, context, ContextDump.Next(target.Meta.Name))
-		if e != nil {
-			log.Error().Err(e).Msg("Component deploy error")
-			err = errors.Join(err, e)
-		}
-		//TODO Save release
-		log.Debug().Any("release", release).Msg("Component deploy result")
-
-		//TODO Run target script (move this logic to src/deploy/)
-	}
-	//TODO Run Env script (move this logic to src/deploy/?   Or stop move on target?)
-	return err
+	return deploy.Apply(environmentArg)
 }

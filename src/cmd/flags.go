@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"deployto/src/deploy"
+	"deployto/src/deploy/adapters"
 	"deployto/src/types"
 	"os"
 	"path/filepath"
@@ -39,7 +39,14 @@ var Flags = []cli.Flag{
 		Name:        "template-repositories",
 		Aliases:     []string{"tr"},
 		Usage:       "URIs to template repository file://XXX or https://XXX.git ",
-		Destination: &deploy.TemplateRepositories,
+		Destination: &adapters.TemplateRepositories,
+	}),
+	altsrc.NewStringFlag(&cli.StringFlag{
+		Name:        "terraform-binary",
+		Value:       "/usr/local/bin/terraform",
+		Aliases:     []string{"tb"},
+		Usage:       "Path to terraform binary file https://developer.hashicorp.com/terraform/install",
+		Destination: &adapters.TerraformBinary,
 	}),
 	&cli.StringFlag{
 		Name:    "config",

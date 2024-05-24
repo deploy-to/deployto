@@ -1,0 +1,23 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: s3
+spec:
+  script:
+    type: terraform
+    name: s3  
+    path: file://terraform/s3.tf                             
+    # TODO git clone repository
+    #repository: https://git.host/resources/postgresql/v12  # определяется в template
+    version:          "latest"                      # определяется в template
+    fullnameOverride: "{{ .alias }}"   # локально "{{ .alias }}" , в яндексе, что получится
+    auth:
+      database:         "{{ .alias }}" # сохранять
+      username:         test-user  # сохранять, генериться из parent aleas, или rnd
+      password:         test-password     # сохранять, генериться rnd
+      postgresPassword": test-pg-password # сохранять, генериться из parent aleas, или rnd
+    outputMapping:
+      hostname: "{{ .fullnameOverride }}"
+      database: "{{ .auth.database }}"
+      username: "{{ .auth.username }}"
+      password: "{{ .auth.password }}"

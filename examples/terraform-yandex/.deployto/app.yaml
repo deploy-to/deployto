@@ -1,0 +1,26 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: servicea
+spec:
+  db:
+    resource: postgresql
+    version: v12
+    name: bitnami-15.1.0-standalone
+
+    type: terraform
+    name: postgresql  
+    path: file:///..//terraform-db/               
+    # TODO git clone repository
+    #repository: https://git.host/resources/postgresql/v12  # определяется в template
+    version:          "12"                      # определяется в template
+    fullnameOverride: "{{ .alias }}"   # локально "{{ .alias }}" , в яндексе, что получится
+    auth:
+      database:         "{{ .alias }}" # сохранять
+      username:         test-user-2  # сохранять, генериться из parent aleas, или rnd
+      password:         test-password     # сохранять, генериться rnd
+    outputMapping:
+      hostname: "{{ .fullnameOverride }}"
+      database: "{{ .auth.database }}"
+      username: "{{ .auth.username }}"
+      password: "{{ .auth.password }}"

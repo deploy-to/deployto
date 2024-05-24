@@ -5,6 +5,9 @@ metadata:
 spec:
   install:
     resource: postgresql
-    version: v16.2
-    name: bitnami-15.1.0-standalone
-    alias: ""
+    version:  yandex
+    name:     allInOne
+    alias:    ""
+
+    # component: helm/bitnami-15.1.0--standalone16.2.yaml
+    # alias: ""

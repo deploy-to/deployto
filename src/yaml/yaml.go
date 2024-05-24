@@ -36,10 +36,7 @@ func GetFromFile[T types.Component | types.Environment | types.Target | types.Jo
 			if err.Error() == "EOF" {
 				break
 			}
-			log.Error().Str("file", fileName).Err(err).Msg("yaml decode error")
-			if strings.HasPrefix(err.Error(), "yaml: line ") {
-				break
-			}
+			log.Debug().Str("fs", fs.URI).Str("file", fileName).Err(err).Msg("yaml decode error. maybe another type")
 			continue
 		}
 

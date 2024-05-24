@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/fatih/structs"
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
@@ -12,19 +13,18 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type FilesystemType int
-
 const (
-	LOCAL FilesystemType = iota
-	GIT
-	TEMP
+	DESTROYED string = "DESTROYED"
+	LOCAL     string = "LOCAL"
+	GIT       string = "GIT"
+	TEMP      string = "TEMP"
 )
 
 type Filesystem struct {
-	URI       string
-	LocalPath string
-	Type      FilesystemType
-	FS        billy.Filesystem
+	URI       string           `structs:",omitempty"`
+	LocalPath string           `structs:",omitempty"`
+	Type      string           `structs:",omitempty"`
+	FS        billy.Filesystem `structs:"-"`
 }
 
 func Supported(uri string) bool {
@@ -108,18 +108,21 @@ func searchLocalRoot(fs *Filesystem, path string, dirName string) *Filesystem {
 		return nil
 	}
 	currentPath = filepath.Clean(filepath.Join(currentPath, path))
-	for {
+	// loop guard
+	// если за 50 итерация не нашли директорию
+	for i := 1; i < 50; i++ {
 		if IsDirExists(filepath.Join(currentPath, dirName)) {
-			log.Debug().Str("searchDir", dirName).Str("path", currentPath).Msg("searchDir found")
+			log.Trace().Str("dirName", dirName).Str("path", currentPath).Msg("searchLocalRoot - ok")
 			return Get("file://" + currentPath)
 		}
-		log.Trace().Str("searchDir", dirName).Str("path", currentPath).Msg("searchDir not found - go to parent")
+		log.Trace().Str("dirName", dirName).Str("path", currentPath).Msg("searchLocalRoot - not found - go to parent")
 
 		if strings.HasSuffix(currentPath, string(os.PathSeparator)) {
 			return nil // root dir
 		}
 		currentPath = filepath.Dir(currentPath)
 	}
+	return nil
 }
 
 const DeploytoDirName = ".deployto"
@@ -133,4 +136,42 @@ func IsDirExists(localPath string) bool {
 		log.Trace().Err(err).Str("path", localPath).Msg("Check dir exists")
 	}
 	return false
+}
+
+func (fs *Filesystem) Destroy() {
+	if fs.Type == LOCAL {
+		log.Trace().Msg("don’t destroy the local file system")
+		return
+	}
+	if fs.Type == GIT || fs.Type == TEMP {
+		if !strings.HasPrefix(fs.LocalPath, os.TempDir()) {
+			log.Error().Str("path", fs.LocalPath).Msg("I'm afraid to delete something important. I don't delete it.")
+			return
+		}
+		err := os.RemoveAll(fs.LocalPath)
+		if err != nil {
+			log.Error().Err(err).Str("path", fs.LocalPath).Msg("destroy error")
+		}
+		fs.LocalPath = "FILESYSTEM WAS DESTROYED"
+		fs.URI = "FILESYSTEM WAS DESTROYED"
+		fs.Type = DESTROYED
+		fs = nil
+		return
+	}
+	log.Error().Str("path", fs.LocalPath).Msg("destroy not implemented")
+}
+
+func (fs *Filesystem) AsValues() map[string]any { // can't import types - loop
+	return structs.Map(fs)
+}
+
+func (fs *Filesystem) Get(fileName string) string {
+	log.Debug().Str("fileName", fileName).Msg("Filesystem.Get")
+	//TODO security load from parent dir
+	//TODO как быть, если ресурс запущен во вложенной папке?
+	bytes, err := os.ReadFile(filepath.Join(fs.LocalPath, fileName))
+	if err != nil {
+		log.Error().Err(err).Str("fileName", fileName).Msg("read file error")
+	}
+	return string(bytes)
 }
