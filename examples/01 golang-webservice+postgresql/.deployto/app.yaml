@@ -3,14 +3,32 @@ kind: Component
 metadata:
   name: example01
 spec:
+  # ci:
+  #   type: job
+  #   path: ..
+  # postgresql:
+  #   auth:
+  #     username:         servicea-user
+  #     password:         HOrFk14CyX
+  #     postgresPassword: xxdsdsddsxxxx
   ci:
-    type: job
-    path: ..
+    type: static
+    outputMapping:
+      build:
+        APPLICATION_NAME: example01
+        COMMITSHORT: 4798c03-dirty.uuidpuY6kC3hzntndXwbjcdvMB
+        REGISTRY: docker.io/deployto
   postgresql:
-    auth:
-      username:         servicea-user
-      password:         HOrFk14CyX
-      postgresPassword: xxdsdsddsxxxx
+    type: static
+    outputMapping:
+      hostname: xxcsd
+      port:     6432
+      database: sdcsd
+      username: cdsdcs
+      password: csdcsd
+      sslmode:  verify-full 
+      target_session_attrs: read-write
+      ssl_ca_file: '{{ .Files.Get "resources/postgresql/yandex/database/ssl_ca_file.crt" }}'
   install:
     alias: ""
     order: 1000
