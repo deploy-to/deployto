@@ -1,0 +1,25 @@
+apiVersion: deployto.dev/v1beta1
+kind: Component
+metadata:
+  name: postgresql
+spec:
+  install:
+#script setting
+    alias: ""
+    type: helm
+    repository: https://charts.bitnami.com/bitnami
+    name:       postgresql
+    version:    "15.1.0"
+#script input
+    fullnameOverride: "{{ .alias }}-host"
+    auth:
+      database:  "{{ .alias }}-database"
+      username:  "{{ .alias }}-username"
+      password:  HOrFk14CyX #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#script output mapping
+    outputMapping:
+      host:     "{{ .Values.fullnameOverride }}"
+      port:     5432
+      database: "{{ .Values.auth.database    }}"
+      user:     "{{ .Values.auth.username    }}"
+      password: "{{ .Values.auth.password    }}"

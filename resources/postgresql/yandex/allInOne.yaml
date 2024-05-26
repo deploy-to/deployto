@@ -28,25 +28,25 @@ spec:
     order: 130
     type: terraform
     path: file://user
-    name:     "{{ .auth.username }}"
-    password: "{{ .auth.password }}"
+    name:     "{{ .alias }}"
+    password: fdmfkmMKMOOcokdsmpcvskd  #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     cluster:  "{{ .cluster.name  }}"
-  db:
+  database:
+#script setting
     order: 1000
     type: terraform
     path: file://database
     alias: ""
+#script input
     cluster: "{{ .cluster.name  }}"
-    user:    "{{ .auth.username }}"
-    name:    "{{ .alias         }}"
+    user:    "{{ .user.name     }}"
+    name:    "{{ .alias }}-database"
+#script output mapping
     outputMapping:
-      hostname: "c-{{ .cluster }}.rw.mdb.yandexcloud.net"
+      host:     "c-{{ .input.cluster.id }}.rw.mdb.yandexcloud.net"
       port:     6432
-      database: "{{ .alias         }}"
-      username: "{{ .auth.username }}"
-      password: "{{ .auth.password }}"
-      sslmode:  verify-full 
-      target_session_attrs: read-write
-      ssl_ca_file: "{{ .Files.Get \"resources/postgresql/yandex/database/ssl_ca_file.crt\" }}"
-
-
+      database: "{{ .name }}"
+      user:     "{{ .user }}"
+      password: "{{ .input.user.password }}"
+      sslmode:     verify-full
+      ssl_ca_file: '{{ .Files.Get "resources/postgresql/yandex/database/ssl_ca_file.crt" }}'

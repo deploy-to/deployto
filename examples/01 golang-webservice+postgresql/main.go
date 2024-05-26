@@ -1,28 +1,27 @@
 package main
 
 import (
-	"database/sql"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gopkg.in/yaml.v2"
 )
 
-type ConfigServer struct {
-	Hostname string
-	Port     int
-	Database string
-	Username string
-	Password string
+type server struct {
+	connConfig *pgx.ConnConfig
 }
 
 func main() {
-	config := mustConfig()
-	http.HandleFunc("/", config.httpHandleFunc)
-	err := http.ListenAndServe(":80", nil)
+	server := newServer()
+	http.HandleFunc("/", server.httpHandleFunc)
+	err := http.ListenAndServe(getFromEnv("PORT", ":80"), nil)
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Println("server closed")
 	} else if err != nil {
@@ -31,47 +30,72 @@ func main() {
 	}
 }
 
-func mustConfig() *ConfigServer {
-	yamlFile, err := os.ReadFile("/config/postgresql.yaml")
+func newServer() *server {
+	configPath := getFromEnv("CONFIG_PATH", "/config")
+
+	configFile, err := os.ReadFile(filepath.Join(configPath, "postgresql.yaml"))
 	if err != nil {
-		fmt.Printf("config read %s error: #%v ", "/config/postgresql.yaml", err)
-		return nil
+		fmt.Printf("config read %s error: #%v ", "postgresql.yaml", err)
+		os.Exit(1)
+	}
+	config := &pgconn.Config{}
+	err = yaml.Unmarshal(configFile, config)
+	if err != nil {
+		fmt.Printf("Unable to unmarshal config: #%v", err)
+		os.Exit(1)
+	}
+	connstring := fmt.Sprintf(
+		"host=%s     port=%d      dbname=%s        user=%s      password=%s       target_session_attrs=read-write",
+		config.Host, config.Port, config.Database, config.User, config.Password)
+	connConfig, err := pgx.ParseConfig(connstring)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to parse config: %v\n", err)
+		os.Exit(1)
 	}
 
-	config := &ConfigServer{}
-	err = yaml.Unmarshal(yamlFile, config)
+	pem, err := os.ReadFile(filepath.Join(configPath, "ssl_ca.crt"))
 	if err != nil {
-		fmt.Printf("config unmarshal error: #%v", err)
-		return nil
+		fmt.Fprintf(os.Stderr, "Unable to read ssl_ca.crt: %v\nContinue without SSL\n", err)
+	} else {
+		rootCertPool := x509.NewCertPool()
+		if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
+			panic("Failed to append PEM.")
+		}
+		connConfig.TLSConfig = &tls.Config{
+			RootCAs:            rootCertPool,
+			InsecureSkipVerify: true,
+		}
 	}
-	return config
+
+	return &server{connConfig: connConfig}
 }
 
-func (config *ConfigServer) httpHandleFunc(w http.ResponseWriter, r *http.Request) {
-	if config == nil {
-		fmt.Printf("%s - config is nil", r.URL)
-		http.Error(w, "config is nil", 500)
+func (s *server) httpHandleFunc(w http.ResponseWriter, r *http.Request) {
+	db, err := pgx.ConnectConfig(r.Context(), s.connConfig)
+	if err != nil {
+		fmt.Printf("%s %v", r.URL, err)
+		http.Error(w, err.Error(), 500)
 		return
 	}
-	if config.Hostname == "" {
-		fmt.Printf("%s - hostname not set", r.URL)
-		http.Error(w, "hostname not set", 500)
-	}
-	psqlconn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", config.Hostname, config.Port, config.Username, config.Password, config.Database)
-	db, err := sql.Open("postgres", psqlconn)
+	defer db.Close(r.Context())
+
+	err = db.Ping(r.Context())
 	if err != nil {
 		fmt.Printf("%s %v", r.URL, err)
 		http.Error(w, err.Error(), 500)
-	}
-	defer db.Close()
-	err = db.Ping()
-	if err != nil {
-		fmt.Printf("%s %v", r.URL, err)
-		http.Error(w, err.Error(), 500)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("postgresql - ok"))
 	fmt.Printf("%s - ok", r.URL)
+}
+
+func getFromEnv(key, def string) string {
+	value, valueExists := os.LookupEnv(key)
+	if !valueExists {
+		return def
+	}
+	return value
 }

@@ -1,14 +1,16 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Values.alias }}-configmap
+  name: {{ .Values.alias }}-config
 data:
   postgresql.yaml: | 
-    hostname: {{ .Values.postgresql.hostname }}
+    host:     {{ .Values.postgresql.host     }}
     port:     {{ .Values.postgresql.port     }}
     database: {{ .Values.postgresql.database }}
-    username: {{ .Values.postgresql.username }}
-    password: {{ .Values.postgresql.password }}
-  root.crt: |
-    {{ .Values.postgresql.ssl_ca_file }}
-  
+    user:     {{ .Values.postgresql.user     }}
+    password: {{ .Values.postgresql.password }} 
+
+{{ if hasKey .Values.postgresql "ssl_ca_file" }}
+  ssl_ca.crt:  |
+{{ .Values.postgresql.ssl_ca_file | indent 4 }}
+{{ end }}

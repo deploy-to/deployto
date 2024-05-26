@@ -15,25 +15,19 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.ci.build.REGISTRY }}/{{ .Values.ci.build.APPLICATION_NAME }}:{{ .Values.ci.build.COMMITSHORT }}"
+          image: "{{ .Values.image }}"
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 80
               protocol: TCP
+          livenessProbe:
+            httpGet:
+              port: 80
           volumeMounts:
           - name: config
-            mountPath: "/config/postgresql.yaml"
-            subPath: "postgresql.yaml"
-          - name: postgresqlSSL
-            mountPath: "/config/root.crt"
-            subPath: "postgresql.yaml"
+            mountPath: "/config"
       volumes:
         - name: config
           configMap:
-            name: {{ .Values.alias }}-configmap
-            items:
-            - key: "postgresql.yaml"
-              path: "postgresql.yaml"
-            - key: "root.crt"
-              path: "root.crt"
+            name: {{ .Values.alias }}-config

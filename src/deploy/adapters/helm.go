@@ -98,10 +98,6 @@ func Helm(d *deploy.Deploy, script *types.Script, contex types.Values) (output t
 	}
 	d.Keeper.Push("helmChartSpec", chartSpec)
 
-	//helmClient.De
-
-	// Install a chart release.
-	// Note that helmclient.Options.Namespace should ideally match the namespace in chartSpec.Namespace.
 	release, err := helmClient.InstallOrUpgradeChart(context.TODO(), &chartSpec, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("Install chart error")
@@ -117,8 +113,8 @@ func Helm(d *deploy.Deploy, script *types.Script, contex types.Values) (output t
 
 	scriptOutput := make(types.Values)
 	//	scriptOutput["manifest"] = release.Manifest
-	scriptOutput["values"] = release.Config
-	scriptOutput["name"] = release.Name
-	scriptOutput["version"] = release.Version
+	scriptOutput["Values"] = release.Config
+	scriptOutput["helmReleaseName"] = release.Name
+	scriptOutput["helmReleaseVersion"] = release.Version
 	return scriptOutput, nil
 }

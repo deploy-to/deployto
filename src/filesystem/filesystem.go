@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
@@ -165,13 +166,13 @@ func (fs *Filesystem) AsValues() map[string]any { // can't import types - loop
 	return structs.Map(fs)
 }
 
-func (fs *Filesystem) Get(fileName string) string {
+func (fs *Filesystem) Get(fileName string) template.HTML {
 	log.Debug().Str("fileName", fileName).Msg("Filesystem.Get")
 	//TODO security load from parent dir
 	//TODO как быть, если ресурс запущен во вложенной папке?
 	bytes, err := os.ReadFile(filepath.Join(fs.LocalPath, fileName))
 	if err != nil {
-		log.Error().Err(err).Str("fileName", fileName).Msg("read file error")
+		log.Error().Err(err).Str("fs", fs.URI).Str("fileName", fileName).Msg("read file error")
 	}
-	return string(bytes)
+	return template.HTML(string(bytes))
 }

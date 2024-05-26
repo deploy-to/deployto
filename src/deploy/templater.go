@@ -9,11 +9,13 @@ import (
 )
 
 type Templater struct {
-	funcs template.FuncMap
+	deploy *Deploy
+	funcs  template.FuncMap
 }
 
-func NewTemplater(d *Deploy) *Templater {
+func NewTemplater(deploy *Deploy) *Templater {
 	return &Templater{
+		deploy: deploy,
 		funcs: template.FuncMap{
 			"inc": func(i int) int { return i + 1 },
 			"dec": func(i int) int { return i + 1 },
@@ -39,18 +41,24 @@ func (templater *Templater) TemplatingString(templ string, context types.Values)
 }
 
 func (templater *Templater) Templating(values, context types.Values) (types.Values, error) {
+	enrichedContext := types.MergeValues(
+		types.Values{
+			"Files": templater.deploy.FS,
+		},
+		context,
+	)
 	result := make(types.Values)
 	for k, v := range values {
 		switch vTyped := v.(type) {
 		case types.Values:
-			subResult, err := templater.Templating(vTyped, context)
+			subResult, err := templater.Templating(vTyped, enrichedContext)
 			if err != nil {
 				log.Error().Err(err).Str("key", k).Msg("Template subValues execute with scriptContext error")
 				return nil, err
 			}
 			result[k] = subResult
 		case string:
-			res, err := templater.TemplatingString(vTyped, context)
+			res, err := templater.TemplatingString(vTyped, enrichedContext)
 			if err != nil {
 				log.Error().Err(err).Str("key", k).Str("template", vTyped).Msg("Templating error")
 				return nil, err

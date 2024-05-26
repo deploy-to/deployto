@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func RunScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
+func RunScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, script *types.Script, scriptInput types.Values) (output types.Values, err error) {
 	l := log.With().Strs("scriptAlias", scriptAlias).Logger()
 
 	if theDependencyWasDeployedEarlier, ok := d.Root.Values[scriptAlias[len(scriptAlias)-1]]; ok {
@@ -40,12 +40,6 @@ func RunScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, sc
 
 	l.Info().Str("type", script.Type).Str("repository", script.Repository).Str("path", script.Path).Bool("root", script.Shared).Msg("RunScript")
 
-	context, err := prepareInput(d, script.Values, d.Root.Values, scriptContext, scriptAlias)
-	if err != nil {
-		l.Error().Err(err).Msg("templating error")
-		return nil, err
-	}
-
 	repositoryFS := comp.Status.Filesystem
 	workdir := filepath.Dir(comp.Status.FileName)
 	if script.Repository != "" {
@@ -61,6 +55,12 @@ func RunScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, sc
 	}
 	deployChildForScript := d.Child(repositoryFS, workdir, scriptAlias)
 
+	context, err := prepareInput(deployChildForScript, script.Values, d.Root.Values, scriptInput, scriptAlias)
+	if err != nil {
+		l.Error().Err(err).Msg("templating error")
+		return nil, err
+	}
+
 	deployChildForScript.Keeper.Push("context", context)
 	deployChildForScript.Keeper.Push("script", script)
 
@@ -73,7 +73,7 @@ func RunScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, sc
 
 		deployChildForScript.Keeper.Push("outputBeforeMapping", output)
 
-		output, err = prepareOutput(deployChildForScript, script.OutputMapping, output, context, scriptAlias)
+		output, err = prepareOutput(deployChildForScript, script.OutputMapping, output, context, scriptInput, scriptAlias)
 		if err != nil {
 			l.Error().Err(err).Msg("prepareOutput error")
 			return nil, err
@@ -101,7 +101,6 @@ func prepareInput(d *deploy.Deploy, scriptValues, appContext, scriptContext type
 		types.Values{
 			"aliases": aliases,
 			"alias":   deploy.BuildAlias(aliases),
-			"Files":   d.FS,
 		},
 	)
 
@@ -114,14 +113,14 @@ func prepareInput(d *deploy.Deploy, scriptValues, appContext, scriptContext type
 	return result, nil
 }
 
-func prepareOutput(d *deploy.Deploy, outputMapping, output, context types.Values, aliases []string) (types.Values, error) {
+func prepareOutput(d *deploy.Deploy, outputMapping, output, context, scriptInput types.Values, aliases []string) (types.Values, error) {
 	fullContext := types.MergeValues(
 		context,
 		output,
 		types.Values{
 			"aliases": aliases,
 			"alias":   deploy.BuildAlias(aliases),
-			"Files":   d.FS,
+			"input":   scriptInput,
 		},
 	)
 
