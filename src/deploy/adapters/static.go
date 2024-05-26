@@ -6,9 +6,15 @@ import (
 )
 
 func init() {
-	deploy.DefaultAdapters["static"] = Static
+	deploy.DefaultAdapters["static"] = &static{}
 }
 
-func Static(d *deploy.Deploy, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
+type static struct{}
+
+func (s *static) Apply(d *deploy.Deploy, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
 	return nil, nil
+}
+
+func (s *static) Destroy(d *deploy.Deploy, script *types.Script, scriptContext types.Values) error {
+	return nil
 }

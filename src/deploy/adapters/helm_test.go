@@ -23,8 +23,9 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			"postgresPassword": "xxdsdsddsxxxx",
 		},
 	}
+	helm := &helmAdapter{}
 	deploy := deploy.NewDeploy(nil, "", []string{"rootAlias"})
-	output, err := Helm(deploy, types.DecodeScript("", script), getTarget(t).AsValues())
+	output, err := helm.Apply(deploy, types.DecodeScript("", script), getTarget(t).AsValues())
 	if err != nil {
 		t.Fatalf("Helm error %v", err)
 	}
@@ -78,7 +79,8 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			"repmgrPassword":   "repmgrpss",
 		},
 	}
-	output, err = Helm(deploy, types.DecodeScript("", script), types.Values(nil))
+
+	output, err = helm.Apply(deploy, types.DecodeScript("", script), types.Values(nil))
 
 	if err != nil {
 		t.Fatalf("Helm error %v", err)
@@ -112,7 +114,7 @@ func TestK8SIntegrationHelm(t *testing.T) {
 			},
 		},
 	}
-	_, err = Helm(deploy, types.DecodeScript("", script), types.Values(nil))
+	_, err = helm.Apply(deploy, types.DecodeScript("", script), types.Values(nil))
 	if err == nil {
 		t.Fatalf("wait helm error")
 	}

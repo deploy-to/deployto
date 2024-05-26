@@ -17,7 +17,8 @@ func TestTerraform(t *testing.T) {
 	// terraform yandex check
 	fs := filesystem.Get("file://../../examples")
 	deploy := deploy.NewDeploy(fs, "terraform-yandex", []string{"AAAAA"})
-	output, err := Terraform(deploy, nil, types.Values(nil))
+	terraform := &terraformAdapter{}
+	output, err := terraform.Apply(deploy, nil, types.Values(nil))
 	if err != nil {
 		_, err = TerraformDestroy(target, fs, "terraform-yandex", []string{"AAAAA"}, input, types.Values(nil))
 		if err != nil {
@@ -52,7 +53,8 @@ output "hello_deployto" {
 		Values: types.Values{"hello": "Hello, from deploy to!"},
 	}
 	deploy := deploy.NewDeploy(fs, "/", nil)
-	output, err := Terraform(deploy, script, context)
+	terraform := &terraformAdapter{}
+	output, err := terraform.Apply(deploy, script, context)
 	if err != nil {
 		t.Fatalf("Terraform error %v", err)
 	}

@@ -2,6 +2,23 @@ package deploy
 
 import "deployto/src/types"
 
-type AdapterImplementation = func(d *Deploy, script *types.Script, scriptContext types.Values) (output map[string]any, err error)
+/*
+ =========   workflows   =========
 
-var DefaultAdapters = map[string]AdapterImplementation{}
+| Deployto | Terraform | Helm      |
+| -------- | --------- | --------- |
+|          | init      | install   |
+|          | validate  |           |
+|          | plan      |           |
+| apply    | apply     | upgrade   |
+|          |           | rollback  |
+| destroy  | destroy   | uninstall |
+
+*/
+
+type Adapter interface {
+	Apply(d *Deploy, script *types.Script, scriptContext types.Values) (output map[string]any, err error)
+	Destroy(d *Deploy, script *types.Script, scriptContext types.Values) error
+}
+
+var DefaultAdapters = map[string]Adapter{}

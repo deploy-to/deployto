@@ -13,13 +13,19 @@ import (
 )
 
 func init() {
-	deploy.DefaultAdapters["resource"] = Resource
-	deploy.DefaultAdapters[""] = Resource //default script type
+	deploy.DefaultAdapters["resource"] = &resource{}
+	deploy.DefaultAdapters[""] = &resource{} //default script type
 }
 
-func Resource(d *deploy.Deploy, script *types.Script, input types.Values) (output types.Values, err error) {
+type resource struct{}
+
+func (r *resource) Apply(d *deploy.Deploy, script *types.Script, input types.Values) (output types.Values, err error) {
 	selector := types.DecodeResourceArg(input)
 	return runResourceTyped(d, script, selector)
+}
+
+func (r *resource) Destroy(d *deploy.Deploy, script *types.Script, input types.Values) error {
+	panic("NOT IMPLIMENTED")
 }
 
 func runResourceTyped(d *deploy.Deploy, script *types.Script, selector *types.ResourceArg) (output types.Values, err error) {
@@ -30,7 +36,7 @@ func runResourceTyped(d *deploy.Deploy, script *types.Script, selector *types.Re
 		return nil, errors.New("Resource not found")
 	}
 	log.Debug().Str("templateDir", resource.Status.FileName).Msg("found template")
-	return RunSingleComponent(d, script, selector.Values, resource)
+	return ApplySingleComponent(d, script, selector.Values, resource)
 }
 
 func searchResourceInRepositories(selector *types.ResourceArg) *types.Component {

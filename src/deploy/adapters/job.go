@@ -19,10 +19,12 @@ import (
 )
 
 func init() {
-	deploy.DefaultAdapters["job"] = JobScript
+	deploy.DefaultAdapters["job"] = &job{}
 }
 
-func JobScript(d *deploy.Deploy, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
+type job struct{}
+
+func (j *job) Apply(d *deploy.Deploy, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
 	resource := types.Get(scriptContext, "", "resource")
 	if resource == "" {
 		log.Error().Msg("job name not found")
@@ -134,4 +136,8 @@ func runJob(d *deploy.Deploy, job *types.Job, scriptContext types.Values) (types
 		}
 	}
 	return output, nil
+}
+
+func (j *job) Destroy(d *deploy.Deploy, script *types.Script, scriptContext types.Values) error {
+	panic("NOT IMPLIMENTED")
 }

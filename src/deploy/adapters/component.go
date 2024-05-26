@@ -13,9 +13,12 @@ import (
 )
 
 func init() {
-	deploy.DefaultAdapters["component"] = Component
+	deploy.DefaultAdapters["component"] = &component{}
 }
-func Component(d *deploy.Deploy, script *types.Script, compContext types.Values) (output types.Values, err error) {
+
+type component struct{}
+
+func (c *component) Apply(d *deploy.Deploy, script *types.Script, compContext types.Values) (output types.Values, err error) {
 	if compContext == nil {
 		log.Error().Msg("want context")
 		return nil, errors.New("WANT CONTEXT")
@@ -29,7 +32,7 @@ func Component(d *deploy.Deploy, script *types.Script, compContext types.Values)
 		if d.Root == d {
 			aliases = []string{comp.Meta.Name}
 		}
-		compOutput, err := RunSingleComponent(d.Child(d.FS, d.Workdir, aliases), script, compContext, comp)
+		compOutput, err := ApplySingleComponent(d.Child(d.FS, d.Workdir, aliases), script, compContext, comp)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +42,11 @@ func Component(d *deploy.Deploy, script *types.Script, compContext types.Values)
 	return output, err
 }
 
-func RunSingleComponent(d *deploy.Deploy, script *types.Script, context types.Values, comp *types.Component) (output types.Values, err error) {
+func (c *component) Destroy(d *deploy.Deploy, script *types.Script, compContext types.Values) error {
+	panic("NOT IMPLIMENTED")
+}
+
+func ApplySingleComponent(d *deploy.Deploy, script *types.Script, context types.Values, comp *types.Component) (output types.Values, err error) {
 	l := log.With().Strs("aliases", d.Aliases).Logger()
 	output = make(types.Values)
 
@@ -64,7 +71,7 @@ func RunSingleComponent(d *deploy.Deploy, script *types.Script, context types.Va
 				}
 			}
 
-			scriptOutput, err := RunScript(d, comp, resourceAliases, script, context)
+			scriptOutput, err := ApplyScript(d, comp, resourceAliases, script, context)
 			if err != nil {
 				l.Error().Err(err).Strs("aliases", resourceAliases).Msg("Dependency error")
 				return output, err

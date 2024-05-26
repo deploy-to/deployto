@@ -53,20 +53,6 @@ func (d *Deploy) Child(fs *filesystem.Filesystem, workdir string, aliases []stri
 	return newDeploy
 }
 
-/*
- =========   workflows   =========
-
-| Deployto | Terraform | Helm      |
-| -------- | --------- | --------- |
-|          | init      | install   |
-|          | validate  |           |
-|          | plan      |           |
-| apply    | apply     | upgrade   |
-|          |           | rollback  |
-| destroy  | destroy   | uninstall |
-
-*/
-
 func (d *Deploy) Apply(envName string) (err error) {
 	// Envirement
 	environments := yaml.Get[types.Environment](d.FS, filesystem.DeploytoDirName)
@@ -102,8 +88,8 @@ func (d *Deploy) Apply(envName string) (err error) {
 			"environment": environment.Base.Meta.Name,
 			"target":      target.AsValues(),
 		}
-		adapterComponent := DefaultAdapters["component"]
-		release, e := adapterComponent(d, nil, context)
+		componentAdapter := DefaultAdapters["component"]
+		release, e := componentAdapter.Apply(d, nil, context)
 		if e != nil {
 			log.Error().Err(e).Msg("Component deploy error")
 			err = errors.Join(err, e)

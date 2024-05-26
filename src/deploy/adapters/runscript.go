@@ -11,7 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func RunScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, script *types.Script, scriptInput types.Values) (output types.Values, err error) {
+func ApplyScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, script *types.Script, scriptInput types.Values) (output types.Values, err error) {
 	l := log.With().Strs("scriptAlias", scriptAlias).Logger()
 
 	if theDependencyWasDeployedEarlier, ok := d.Root.Values[scriptAlias[len(scriptAlias)-1]]; ok {
@@ -65,7 +65,7 @@ func RunScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, sc
 	deployChildForScript.Keeper.Push("script", script)
 
 	if adapter, ok := deploy.DefaultAdapters[script.Type]; ok {
-		output, err = adapter(deployChildForScript, script, context)
+		output, err = adapter.Apply(deployChildForScript, script, context)
 		if err != nil {
 			l.Error().Err(err).Msg("RunScriptFuncImplementation error")
 			return nil, err

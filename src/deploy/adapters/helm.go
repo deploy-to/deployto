@@ -19,10 +19,12 @@ import (
 )
 
 func init() {
-	deploy.DefaultAdapters["helm"] = Helm
+	deploy.DefaultAdapters["helm"] = &helmAdapter{}
 }
 
-func Helm(d *deploy.Deploy, script *types.Script, contex types.Values) (output types.Values, err error) {
+type helmAdapter struct{}
+
+func (h *helmAdapter) Apply(d *deploy.Deploy, script *types.Script, contex types.Values) (output types.Values, err error) {
 	//TODO добавить логику использвания workdir/repositoryFS/helm repository
 	target := types.DecodeTarget(contex["target"])
 
@@ -117,4 +119,8 @@ func Helm(d *deploy.Deploy, script *types.Script, contex types.Values) (output t
 	scriptOutput["helmReleaseName"] = release.Name
 	scriptOutput["helmReleaseVersion"] = release.Version
 	return scriptOutput, nil
+}
+
+func (h *helmAdapter) Destroy(d *deploy.Deploy, script *types.Script, contex types.Values) error {
+	panic("NOT IMPLIMENTED")
 }
