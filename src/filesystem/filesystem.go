@@ -92,8 +92,8 @@ func GetDeploytoRootFilesystem(fs *Filesystem, path string) *Filesystem {
 	if fs == nil {
 		return nil
 	}
-	if fs.Type == GIT {
-		log.Error().Msg("GetDeploytoRootFilesystem for git not implimented")
+	if fs.Type != LOCAL {
+		log.Error().Msg("GetDeploytoRootFilesystem not implimented for not LOCAL filesystem")
 		return nil
 	}
 	if fs.Type == LOCAL {

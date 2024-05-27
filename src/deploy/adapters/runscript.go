@@ -5,13 +5,12 @@ import (
 	"deployto/src/filesystem"
 	"deployto/src/types"
 	"errors"
-	"net/url"
 	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 )
 
-func ApplyScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, script *types.Script, scriptInput types.Values) (output types.Values, err error) {
+func ApplyScript(d *deploy.DeployState, comp *types.Component, scriptAlias []string, script *types.Script, scriptInput types.Values) (output types.Values, err error) {
 	l := log.With().Strs("scriptAlias", scriptAlias).Logger()
 
 	if theDependencyWasDeployedEarlier, ok := d.Root.Values[scriptAlias[len(scriptAlias)-1]]; ok {
@@ -26,17 +25,14 @@ func ApplyScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, 
 	if script.Values == nil {
 		script.Values = make(types.Values)
 	}
-	if _, ok := script.Values["resource"]; !ok {
-		script.Values["resource"] = scriptAlias[len(scriptAlias)-1]
-	}
 	// script.Path prepare for go-git function
 	// remove Schema from path
-	u, err := url.Parse(script.Path)
-	if err != nil {
-		log.Error().Err(err).Msg("Url parsing  error")
-		return nil, err
-	}
-	script.Path = u.Host + u.Path
+	// u, err := url.Parse(script.Path)
+	// if err != nil {
+	// 	log.Error().Err(err).Msg("Url parsing  error")
+	// 	return nil, err
+	// }
+	// script.Path = u.Host + u.Path
 
 	l.Info().Str("type", script.Type).Str("repository", script.Repository).Str("path", script.Path).Bool("root", script.Shared).Msg("RunScript")
 
@@ -94,7 +90,7 @@ func ApplyScript(d *deploy.Deploy, comp *types.Component, scriptAlias []string, 
 	return nil, errors.New("RUNSCRIPT FUNCTION NOT FOUND")
 }
 
-func prepareInput(d *deploy.Deploy, scriptValues, appContext, scriptContext types.Values, aliases []string) (types.Values, error) {
+func prepareInput(d *deploy.DeployState, scriptValues, appContext, scriptContext types.Values, aliases []string) (types.Values, error) {
 	fullContext := types.MergeValues(
 		appContext,
 		scriptContext,
@@ -113,7 +109,7 @@ func prepareInput(d *deploy.Deploy, scriptValues, appContext, scriptContext type
 	return result, nil
 }
 
-func prepareOutput(d *deploy.Deploy, outputMapping, output, context, scriptInput types.Values, aliases []string) (types.Values, error) {
+func prepareOutput(d *deploy.DeployState, outputMapping, output, context, scriptInput types.Values, aliases []string) (types.Values, error) {
 	fullContext := types.MergeValues(
 		context,
 		output,

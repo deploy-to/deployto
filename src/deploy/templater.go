@@ -9,11 +9,11 @@ import (
 )
 
 type Templater struct {
-	deploy *Deploy
+	deploy *DeployState
 	funcs  template.FuncMap
 }
 
-func NewTemplater(deploy *Deploy) *Templater {
+func NewTemplater(deploy *DeployState) *Templater {
 	return &Templater{
 		deploy: deploy,
 		funcs: template.FuncMap{

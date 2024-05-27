@@ -4,12 +4,10 @@ metadata:
   name: postgresql
 spec:
   install:
-    # resource: postgresql
-    # version:  yandex
-    # name:     allInOne
-    # alias:    ""
+    # name:  postgresql
+    # path:  yandex/allInOne.yaml
+    # alias: ""
 
-    resource: postgresql
-    version:  kubernetes
-    name:     bitnami-15.1.0--standalone16.2
-    alias:    ""
+    name:  postgresql
+    path:  kubernetes/bitnami-15.1.0--standalone16.2.yaml
+    alias: ""

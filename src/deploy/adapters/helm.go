@@ -19,14 +19,14 @@ import (
 )
 
 func init() {
-	deploy.DefaultAdapters["helm"] = &helmAdapter{}
+	deploy.DefaultAdapters["helm"] = (*helmAdapter)(nil)
 }
 
 type helmAdapter struct{}
 
-func (h *helmAdapter) Apply(d *deploy.Deploy, script *types.Script, contex types.Values) (output types.Values, err error) {
+func (h *helmAdapter) Apply(d *deploy.DeployState, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
 	//TODO добавить логику использвания workdir/repositoryFS/helm repository
-	target := types.DecodeTarget(contex["target"])
+	target := types.DecodeTarget(scriptContext["target"])
 
 	var outputBuffer bytes.Buffer
 	//set settings for helm
@@ -53,7 +53,7 @@ func (h *helmAdapter) Apply(d *deploy.Deploy, script *types.Script, contex types
 		return nil, err
 	}
 	// get repository url
-	repository := types.Get(contex, "", "repository")
+	repository := types.Get(scriptContext, "", "repository")
 	if repository == "" || filesystem.Supported(repository) {
 		chartName = filepath.Join(d.FS.LocalPath, d.Workdir)
 	} else {
@@ -76,15 +76,15 @@ func (h *helmAdapter) Apply(d *deploy.Deploy, script *types.Script, contex types
 			log.Error().Err(err).Str("path", "helm").Msg("Add a chart-repository to the client error")
 			return nil, err
 		}
-		chartName = chartRepo.Name + "/" + types.Get(contex, d.Aliases[len(d.Aliases)-1], "name")
+		chartName = chartRepo.Name + "/" + types.Get(scriptContext, d.Aliases[len(d.Aliases)-1], "name")
 	}
 
-	valuesFile, err := yaml.Marshal(&contex)
+	valuesFile, err := yaml.Marshal(&scriptContext)
 	if err != nil {
 		log.Error().Err(err).Str("path", "helm").Msg("Pasing yaml error")
 		return nil, err
 	}
-	version := types.Get(contex, d.Aliases[len(d.Aliases)-1], "version")
+	version := types.Get(scriptContext, d.Aliases[len(d.Aliases)-1], "version")
 	// put settings for chart and put values
 	chartSpec := helmclient.ChartSpec{
 		ReleaseName:     deploy.BuildAlias(d.Aliases),
@@ -121,6 +121,6 @@ func (h *helmAdapter) Apply(d *deploy.Deploy, script *types.Script, contex types
 	return scriptOutput, nil
 }
 
-func (h *helmAdapter) Destroy(d *deploy.Deploy, script *types.Script, contex types.Values) error {
+func (h *helmAdapter) Destroy(d *deploy.DeployState, script *types.Script, contex types.Values) error {
 	panic("NOT IMPLIMENTED")
 }

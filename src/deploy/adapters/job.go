@@ -19,30 +19,24 @@ import (
 )
 
 func init() {
-	deploy.DefaultAdapters["job"] = &job{}
+	deploy.DefaultAdapters["job"] = (*job)(nil)
 }
 
 type job struct{}
 
-func (j *job) Apply(d *deploy.Deploy, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
-	resource := types.Get(scriptContext, "", "resource")
-	if resource == "" {
-		log.Error().Msg("job name not found")
-		return nil, errors.New("job name not found")
-	}
-
+func (j *job) Apply(d *deploy.DeployState, script *types.Script, scriptContext types.Values) (output types.Values, err error) {
 	//TODO определить, как искать path у job. Т.к. с одной стороны он должен указывать на место, где искать описание job, а с другой, на место, где будет выполняться
 	jobs := yaml.Get[types.Job](d.FS, d.FS.FS.Join(d.Workdir, ".deployto"))
 	for _, job := range jobs {
-		if job.Meta.Name == resource {
+		if job.Meta.Name == script.Name {
 			return runJob(d, job, scriptContext)
 		}
 	}
-	log.Error().Str("jobName", resource).Msg("job not found")
+	log.Error().Str("jobName", script.Name).Msg("job not found")
 	return nil, errors.New("job not found")
 }
 
-func runJob(d *deploy.Deploy, job *types.Job, scriptContext types.Values) (types.Values, error) {
+func runJob(d *deploy.DeployState, job *types.Job, scriptContext types.Values) (types.Values, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10)*time.Minute) //TODO timeout to job file? or to cmg.Flags?
 	defer cancel()
 
@@ -138,6 +132,6 @@ func runJob(d *deploy.Deploy, job *types.Job, scriptContext types.Values) (types
 	return output, nil
 }
 
-func (j *job) Destroy(d *deploy.Deploy, script *types.Script, scriptContext types.Values) error {
+func (j *job) Destroy(d *deploy.DeployState, script *types.Script, scriptContext types.Values) error {
 	panic("NOT IMPLIMENTED")
 }

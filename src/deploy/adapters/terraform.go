@@ -17,14 +17,14 @@ import (
 )
 
 func init() {
-	deploy.DefaultAdapters["terraform"] = &terraformAdapter{}
+	deploy.DefaultAdapters["terraform"] = (*terraformAdapter)(nil)
 }
 
 type terraformAdapter struct{}
 
 var TerraformBinary string //setup in cli.StringFlag{ Name: "terraform-binary", Destination: &deploy.TerraformBinary,
 
-func (t *terraformAdapter) Apply(d *deploy.Deploy, script *types.Script, compContext types.Values) (output types.Values, err error) {
+func (t *terraformAdapter) Apply(d *deploy.DeployState, script *types.Script, compContext types.Values) (output types.Values, err error) {
 	fullpath := filepath.Join(d.FS.LocalPath, d.Workdir)
 
 	//TODO find terraform exec OR use docker instalation OR import github.com/hashicorp/terraform/command ("Business Source License")
@@ -129,7 +129,7 @@ func tfJsonStateOutput2Values(tf map[string]*tfjson.StateOutput, secrets *types.
 	return result
 }
 
-func (t *terraformAdapter) Destroy(d *deploy.Deploy, script *types.Script, compContext types.Values) error {
+func (t *terraformAdapter) Destroy(d *deploy.DeployState, script *types.Script, compContext types.Values) error {
 	panic("NOT IMPLIMENTED")
 }
 

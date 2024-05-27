@@ -12,7 +12,8 @@ type Script = struct {
 	Repository    string
 	Path          string
 	Shared        bool
-	Alias         string
+	Alias         string // служит для формерования контекста / хоста
+	Name          string // указывает на имя ресурса или job, или на имя сhart для helm
 	OutputMapping Values
 	Values        Values `mapstructure:",remain"` //Values хранятся на том же уровне, что и Order, Type...
 }
@@ -33,6 +34,11 @@ func DecodeScript(defaultAlias string, values Values) (script *Script) {
 	if _, aliasExists := values["alias"]; !aliasExists {
 		script.Alias = defaultAlias
 	}
-
+	if _, nameExists := values["name"]; !nameExists {
+		script.Name = defaultAlias
+	}
+	if script.Values == nil {
+		script.Values = make(Values)
+	}
 	return script
 }

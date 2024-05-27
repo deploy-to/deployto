@@ -11,8 +11,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Deploy struct {
-	Root      *Deploy
+const (
+	NEW        string = "NEW"
+	DEPLOYING  string = "DEPLOYING"
+	DEPLOYED   string = "DEPLOYED"
+	DESTROYING string = "DESTROYING"
+	DESTROYED  string = "UNDEPLOYED"
+	ERROR      string = "ERROR"
+)
+
+type DeployState struct {
+	Root      *DeployState
 	FS        *filesystem.Filesystem
 	Workdir   string
 	Aliases   []string
@@ -20,28 +29,31 @@ type Deploy struct {
 	Templater *Templater
 	Secrets   types.Secrets
 	Values    types.Values
+	State     string
 }
 
-func NewDeploy(fs *filesystem.Filesystem, workdir string, aliases []string) *Deploy {
+func NewDeploy(fs *filesystem.Filesystem, workdir string, aliases []string) *DeployState {
 	if fs.Type != filesystem.LOCAL {
+		log.Error().Msg("NewDeploy not implemented for not LOCAL filesystem")
 		return nil
 	}
 	localPath := filepath.Join(fs.LocalPath, workdir, filesystem.DeploytoDirName, "deployed")
 
-	d := &Deploy{
+	d := &DeployState{
 		FS:      fs,
 		Workdir: workdir,
 		Aliases: aliases,
 		Keeper:  GetDeployKeeper(localPath),
 		Secrets: types.NewSecrets(),
+		State:   NEW,
 	}
 	d.Root = d
 	d.Templater = NewTemplater(d)
 	return d
 }
 
-func (d *Deploy) Child(fs *filesystem.Filesystem, workdir string, aliases []string) *Deploy {
-	newDeploy := &Deploy{
+func (d *DeployState) Child(fs *filesystem.Filesystem, workdir string, aliases []string) *DeployState {
+	newDeploy := &DeployState{
 		Root:    d.Root,
 		FS:      fs,
 		Workdir: workdir,
@@ -53,7 +65,7 @@ func (d *Deploy) Child(fs *filesystem.Filesystem, workdir string, aliases []stri
 	return newDeploy
 }
 
-func (d *Deploy) Apply(envName string) (err error) {
+func (d *DeployState) Apply(envName string) (err error) {
 	// Envirement
 	environments := yaml.Get[types.Environment](d.FS, filesystem.DeploytoDirName)
 	var environment *types.Environment
@@ -104,6 +116,6 @@ func (d *Deploy) Apply(envName string) (err error) {
 	return err
 }
 
-func (d *Deploy) Destroy(env string) error {
+func (d *DeployState) Destroy(env string) error {
 	return nil
 }

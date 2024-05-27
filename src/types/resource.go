@@ -6,10 +6,9 @@ import (
 )
 
 type ResourceArg = struct {
-	Resource string
-	Version  string
-	Name     string
-	Values   Values `mapstructure:",remain"`
+	Version string
+	Name    string
+	Values  Values `mapstructure:",remain"`
 }
 
 func DecodeResourceArg(values any) (resourceArg *ResourceArg) {
